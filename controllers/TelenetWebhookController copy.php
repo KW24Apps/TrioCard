@@ -10,10 +10,9 @@ class TelenetWebhookController {
     // Configurações do Bitrix
     private const BITRIX_CONFIG = [
         'entity_type_id' => 1054,
-        'category' => 195,
+        'campo_protocolo' => 'ufCrm41_1727802471',
         'mapeamento_campos' => [
             'nome_arquivo' => 'ufCrm41_1737477674',
-            'campo_protocolo' => 'ufCrm41_1727802471',
             'mensagem' => 'ufCrm41_1737476071', 
             'cliente' => 'ufCrm41_1727805418',
             'cnpj' => 'ufCrm41_1727873180',
@@ -38,31 +37,54 @@ class TelenetWebhookController {
 
             $protocolo = $dados['protocolo'];
 
-            // 2. Preparar campos para criar o deal
-            $camposParaCriar = [];
+            // 2. Buscar deal pelo protocolo
+            $filtros = [self::BITRIX_CONFIG['campo_protocolo'] => $protocolo];
+            $resultadoBusca = BitrixHelper::listarItensCrm(
+                self::BITRIX_CONFIG['entity_type_id'], 
+                $filtros, 
+                ['id', 'title', self::BITRIX_CONFIG['campo_protocolo']]
+            );
+
+            if (!$resultadoBusca['success']) {
+                echo json_encode(['success' => false, 'error' => 'Erro ao buscar deal no Bitrix: ' . ($resultadoBusca['error'] ?? 'Erro desconhecido')]);
+                return;
+            }
+
+            $deals = $resultadoBusca['items'] ?? [];
+            
+            if (empty($deals)) {
+                echo json_encode(['success' => false, 'error' => "Deal não encontrado para o protocolo: $protocolo"]);
+                return;
+            }
+
+            $deal = $deals[0]; // Pega o primeiro (deveria ser único)
+            $dealId = $deal['id'];
+
+            // 3. Preparar campos para atualizar
+            $camposParaAtualizar = [];
             
             // Mapear campos do JSON para campos do Bitrix
             foreach (self::BITRIX_CONFIG['mapeamento_campos'] as $campoJson => $ufBitrix) {
                 if (isset($dados[$campoJson]) && !empty($dados[$campoJson])) {
-                    $camposParaCriar[$ufBitrix] = $dados[$campoJson];
+                    $camposParaAtualizar[$ufBitrix] = $dados[$campoJson];
                 }
             }
 
-            // 3. Criar deal no Bitrix
-            $resultadoCriacao = BitrixDealHelper::criarDeal(
-                self::BITRIX_CONFIG['entity_type_id'],
-                self::BITRIX_CONFIG['category'],
-                $camposParaCriar
-            );
+            // 4. Atualizar deal no Bitrix se há campos para atualizar
+            if (!empty($camposParaAtualizar)) {
+                $resultadoAtualizacao = BitrixDealHelper::editarDeal(
+                    self::BITRIX_CONFIG['entity_type_id'],
+                    $dealId,
+                    $camposParaAtualizar
+                );
 
-            if (!$resultadoCriacao['success']) {
-                echo json_encode(['success' => false, 'error' => 'Erro ao criar deal no Bitrix: ' . ($resultadoCriacao['error'] ?? 'Erro desconhecido')]);
-                return;
+                if (!$resultadoAtualizacao['success']) {
+                    echo json_encode(['success' => false, 'error' => 'Erro ao atualizar deal no Bitrix: ' . ($resultadoAtualizacao['error'] ?? 'Erro desconhecido')]);
+                    return;
+                }
             }
 
-            $dealId = $resultadoCriacao['id'];
-
-            // 4. Resposta de sucesso
+            // 5. Resposta de sucesso
             echo json_encode([
                 'success' => true,
                 'message' => 'Dados recebidos e processados com sucesso',
