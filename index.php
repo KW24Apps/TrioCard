@@ -7,4 +7,4 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 }
 
 // Carrega o roteador principal
-require_once __DIR__ . '/routers/index.php';
+require_once __DIR__ . '/routers/CardEloRouter.php';
