@@ -10,7 +10,7 @@ class BitrixHelper
     // Envia requisição para API Bitrix com endpoint e parâmetros fornecidos
     public static function chamarApi($endpoint, $params, $opcoes = [])
     {
-        $webhookBase = trim($GLOBALS['ACESSO_AUTENTICADO']['webhook_bitrix'] ?? '');
+        $webhookBase = trim($GLOBALS['ACESSO_AUTENTICADO']['webhook_bitrix'] ?? 'https://gnapp.bitrix24.com.br/rest/21/z204rrb72cwrv16v');
 
         if (!$webhookBase) {
             LogHelper::logBitrixHelpers("Webhook não informado para chamada do endpoint: $endpoint", __CLASS__ . '::' . __FUNCTION__);
@@ -198,10 +198,7 @@ class BitrixHelper
             $start += 50; // Bitrix sempre retorna 50 por página
             $paginaAtual++;
 
-            // Log de progresso
-            LogHelper::logSincronizacaoBitrix("Página {$paginaAtual} processada - {$totalPagina} itens encontrados. Total acumulado: {$totalGeral}");
-
-        } while ($temProximaPagina && $totalPagina === 50); // Para quando não há mais páginas ou página incompleta
+            } while ($temProximaPagina && $totalPagina === 50); // Para quando não há mais páginas ou página incompleta
 
         return [
             'success' => true,

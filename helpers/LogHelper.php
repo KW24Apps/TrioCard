@@ -57,7 +57,7 @@ class LogHelper
     // Registra uma rota não encontrada no log
     public static function registrarRotaNaoEncontrada(string $uri, string $method, string $arquivoRota): void
     {
-        $arquivoLog = __DIR__ . '/../../../logs/logRotasNaoEncontradas.log';
+        $arquivoLog = __DIR__ . '/../../logs/logRotasNaoEncontradas.log';
         $timestamp = date('Y-m-d H:i:s');
         $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
         $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';
@@ -67,28 +67,10 @@ class LogHelper
         file_put_contents($arquivoLog, $linha, FILE_APPEND);
     }
 
-    // Registra de Log de Permição de Cliente/Apilicação
-    public static function logAcessoAplicacao(array $dados, string $contexto): void
-    {
-        $arquivoLog = __DIR__ . '/../../../logs/aplicacao_acesso.log';
-        $timestamp = date('Y-m-d H:i:s');
-        $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
-        $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';
-
-        // Se não passar contexto, tenta pegar automaticamente
-        if (!$contexto) {
-            $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-            $contexto = $bt[1]['function'] ?? 'desconhecido';
-        }
-
-        $linha = "[$timestamp] [$traceId] [$aplicacao] [$contexto] - ACESSO: " . json_encode($dados, JSON_UNESCAPED_UNICODE) . PHP_EOL;
-        file_put_contents($arquivoLog, $linha, FILE_APPEND);
-    }
-    
     // Registra uma mensagem de log para BitrixHelpers
     public static function logBitrixHelpers(string $mensagem, string $contexto = ''): void
     {
-        $arquivoLog = __DIR__ . '/../../../logs/BitrixHelpers.log';
+        $arquivoLog = __DIR__ . '/../../logs/BitrixHelpers.log';
         $timestamp = date('Y-m-d H:i:s');
         $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
         $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';
@@ -103,62 +85,4 @@ class LogHelper
         $linha = "[$timestamp] [$traceId] [$aplicacao] [$contexto] - $mensagem" . PHP_EOL;
         file_put_contents($arquivoLog, $linha, FILE_APPEND);
     }
-
-    // Registra uma mensagem de log para ClickSign
-    public static function logClickSign(string $mensagem, string $contexto = ''): void
-    {
-        $arquivoLog = __DIR__ . '/../../../logs/clicksign.log';
-        $timestamp = date('Y-m-d H:i:s');
-        $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
-        $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';
-                
-        if (!$contexto) {
-            $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-            $classe = $bt[1]['class'] ?? '';
-            $funcao = $bt[1]['function'] ?? 'desconhecido';
-            $contexto = $classe ? ($classe . '::' . $funcao) : $funcao;
-        }
-
-        $linha = "[$timestamp] [$traceId] [$aplicacao] [$contexto] - $mensagem" . PHP_EOL;
-        file_put_contents($arquivoLog, $linha, FILE_APPEND);
-    }
-
-    // Registra uma mensagem de log para o SchedulerController
-    public static function logSchedulerController(string $mensagem, string $contexto = ''): void
-    {
-        $arquivoLog = __DIR__ . '/../../../logs/scheduler_controller.log';
-        $timestamp = date('Y-m-d H:i:s');
-        $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
-        $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';
-
-        if (!$contexto) {
-            $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-            $classe = $bt[1]['class'] ?? '';
-            $funcao = $bt[1]['function'] ?? 'desconhecido';
-            $contexto = $classe ? ($classe . '::' . $funcao) : $funcao;
-        }
-
-        $linha = "[$timestamp] [$traceId] [$aplicacao] [$contexto] - $mensagem" . PHP_EOL;
-        file_put_contents($arquivoLog, $linha, FILE_APPEND);
-    }
-
-    // Registra uma mensagem de log para Sincronização Bitrix
-    public static function logSincronizacaoBitrix(string $mensagem, string $contexto = ''): void
-    {
-        $arquivoLog = __DIR__ . '/../../../logs/sincronizacao_bitrix.log';
-        $timestamp = date('Y-m-d H:i:s');
-        $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
-        $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';
-
-        if (!$contexto) {
-            $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-            $classe = $bt[1]['class'] ?? '';
-            $funcao = $bt[1]['function'] ?? 'desconhecido';
-            $contexto = $classe ? ($classe . '::' . $funcao) : $funcao;
-        }
-
-        $linha = "[$timestamp] [$traceId] [$aplicacao] [$contexto] - $mensagem" . PHP_EOL;
-        file_put_contents($arquivoLog, $linha, FILE_APPEND);
-    }
-
 }
