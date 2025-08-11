@@ -14,6 +14,11 @@ if (stripos($uri, 'telenet') !== false) {
     exit;
 }
 
+if (stripos($uri, 'flash') !== false) {
+    require_once __DIR__ . '/routers/FlashRouter.php';
+    exit;
+}
+
 // Exemplo para outros webhooks/rotas futuras:
 // if (stripos($uri, 'geocard') !== false) {
 //     require_once __DIR__ . '/routers/GeoCardRouter.php';
