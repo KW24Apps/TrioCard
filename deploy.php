@@ -1,6 +1,6 @@
 <?php
 echo 'Usuário executando: ' . get_current_user();
-//teste
+//teste123
 // ATENÇÃO: Corrigido o caminho para o repositório do TrioCard
 $repoDir = '/home/kw24co49/triocard.kw24.com.br'; 
 $secret = 'hF9kL2xV7qP3sY8mZ4bW1cN0'; // MESMA chave configurada no Webhook
