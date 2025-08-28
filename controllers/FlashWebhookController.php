@@ -32,7 +32,7 @@ class FlashWebhookController {
             } else {
                 // Consulta individual
                 $this->consultarIndividual($dados);
-            }
+            } 
 
         } catch (Exception $e) {
             // Log do erro
