@@ -18,3 +18,28 @@
 [2025-08-28 18:38:44] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
 [2025-08-28 18:38:44] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
 [2025-08-28 18:38:45] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
+[2025-08-28 18:39:59] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
+[2025-08-28 18:39:59] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:39:59] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
+[2025-08-28 18:40:00] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
+[2025-08-28 18:43:51] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:43:51] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
+[2025-08-28 18:43:51] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 400 | Erro:  | Descrição: Owner was not found
+[2025-08-28 18:43:51] [sem_trace] [desconhecida] [Helpers\BitrixHelper::adicionarComentarioTimeline] - FALHA AO ADICIONAR COMENTÁRIO - EntityID: 5498, EntityType: T1054 - Erro: {"error":"OWNER_NOT_FOUND","error_description":"Owner was not found"}
+[2025-08-28 18:44:08] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:44:08] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
+[2025-08-28 18:44:08] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 400 | Erro:  | Descrição: Owner was not found
+[2025-08-28 18:44:08] [sem_trace] [desconhecida] [Helpers\BitrixHelper::adicionarComentarioTimeline] - FALHA AO ADICIONAR COMENTÁRIO - EntityID: 5498, EntityType: T1054 - Erro: {"error":"OWNER_NOT_FOUND","error_description":"Owner was not found"}
+[2025-08-28 18:44:16] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:44:17] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
+[2025-08-28 18:44:17] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 400 | Erro:  | Descrição: Owner was not found
+[2025-08-28 18:44:17] [sem_trace] [desconhecida] [Helpers\BitrixHelper::adicionarComentarioTimeline] - FALHA AO ADICIONAR COMENTÁRIO - EntityID: 5498, EntityType: T1054 - Erro: {"error":"OWNER_NOT_FOUND","error_description":"Owner was not found"}
+[2025-08-28 18:49:19] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:49:19] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
+[2025-08-28 18:49:20] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 200 | Erro: 
+[2025-08-28 18:53:26] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:53:26] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
+[2025-08-28 18:53:26] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 200 | Erro: 
+[2025-08-28 18:55:09] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:55:09] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
+[2025-08-28 18:55:10] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 200 | Erro: 

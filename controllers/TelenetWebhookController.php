@@ -54,16 +54,12 @@ class TelenetWebhookController {
                 $campoProtocolo = self::BITRIX_CONFIG['mapeamento_campos']['protocolo'];
                 $filtros = [$campoProtocolo => $protocolo];
                 
-                LogHelper::logBitrixHelpers("Buscando deal com filtros: " . json_encode($filtros));
-
                 $resultadoBusca = BitrixHelper::listarItensCrm(
                     self::BITRIX_CONFIG['entity_type_id'],
                     $filtros,
                     ['id', $campoProtocolo],
                     1
                 );
-
-                LogHelper::logBitrixHelpers("Resultado da busca: " . json_encode($resultadoBusca));
                 
                 if (isset($resultadoBusca['success']) && $resultadoBusca['success'] && !empty($resultadoBusca['items'])) {
                     $this->atualizarDeal($resultadoBusca['items'][0], $dados, $protocolo);
@@ -115,6 +111,25 @@ class TelenetWebhookController {
             echo json_encode(['success' => false, 'error' => 'Erro ao atualizar deal no Bitrix: ' . ($resultado['error'] ?? 'Erro desconhecido')]);
             return;
         }
+
+        // Adicionar comentário na timeline
+        $entityTypeTimeline = 'dynamic_' . self::BITRIX_CONFIG['entity_type_id'];
+        
+        $baseComment = '';
+        switch ($dados['mensagem']) {
+            case 'Arquivo retornado':
+                $baseComment = 'TeleNet: Arquivo retornado Rede Compras.';
+                break;
+            case 'Sem retorno':
+                $baseComment = 'TeleNet: Sem retorno Rede Compras.';
+                break;
+            default:
+                $baseComment = "TeleNet: {$dados['mensagem']} Rede Compras.";
+                break;
+        }
+        $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
+
+        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $dealExistente['id'], $comment);
         
         echo json_encode([
             'success' => true,
@@ -145,12 +160,21 @@ class TelenetWebhookController {
             echo json_encode(['success' => false, 'error' => 'Erro ao criar deal no Bitrix: ' . ($resultado['error'] ?? 'Erro desconhecido')]);
             return;
         }
+
+        // Adicionar comentário na timeline
+        $newDealId = $resultado['id'];
+        $entityTypeTimeline = 'dynamic_' . self::BITRIX_CONFIG['entity_type_id'];
+
+        $baseComment = 'TeleNet: Arquivo Gerado na Rede Compras.'; // Mensagem específica para criação
+        $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
+
+        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $newDealId, $comment);
         
         echo json_encode([
             'success' => true,
             'message' => 'Deal criado com sucesso',
             'protocolo' => $protocolo,
-            'deal_id' => $resultado['id'],
+            'deal_id' => $newDealId,
             'acao' => 'criado',
             'timestamp' => date('Y-m-d H:i:s')
         ]);

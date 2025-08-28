@@ -208,4 +208,43 @@ class BitrixHelper
         ];
     }
 
+    public static function adicionarComentarioTimeline(string $entityType, int $entityId, string $comment, ?int $authorId = null)
+    {
+        // Se authorId não for passado, tenta buscar da global
+        if (!$authorId) {
+            $configExtra = $GLOBALS['ACESSO_AUTENTICADO']['config_extra'] ?? null;
+            $configJson = $configExtra ? json_decode($configExtra, true) : [];
+            
+            if (!empty($configJson)) {
+                $firstSpaKey = array_key_first($configJson);
+                $authorId = $configJson[$firstSpaKey]['bitrix_user_id_comments'] ?? null;
+            }
+        }
+
+        $params = [
+            'fields' => [
+                'ENTITY_ID' => $entityId,
+                'ENTITY_TYPE' => $entityType,
+                'COMMENT' => $comment
+            ]
+        ];
+
+        if ($authorId) {
+            $params['fields']['AUTHOR_ID'] = (int)$authorId;
+        }
+
+        $resultado = self::chamarApi('crm.timeline.comment.add', $params, ['log' => false]);
+
+        // Log apenas em caso de erro
+        if (!isset($resultado['result']) || empty($resultado['result'])) {
+            LogHelper::logBitrixHelpers(
+                "FALHA AO ADICIONAR COMENTÁRIO - EntityID: $entityId, EntityType: $entityType - Erro: " . json_encode($resultado, JSON_UNESCAPED_UNICODE),
+                __CLASS__ . '::' . __FUNCTION__
+            );
+            return ['success' => false, 'error' => $resultado['error_description'] ?? 'Erro desconhecido'];
+        }
+
+        return ['success' => true, 'result' => $resultado['result']];
+    }
+
 }
