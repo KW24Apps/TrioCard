@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('America/Sao_Paulo');
 // index.php principal do projeto TrioCard
 
 // Carrega autoload se existir (para helpers, controllers, etc.)
