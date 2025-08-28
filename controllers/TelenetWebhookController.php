@@ -2,9 +2,11 @@
 // Controller para receber o webhook da Telenet
 require_once __DIR__ . '/../helpers/BitrixHelper.php';
 require_once __DIR__ . '/../helpers/BitrixDealHelper.php';
+require_once __DIR__ . '/../helpers/LogHelper.php';
 
 use Helpers\BitrixHelper;
 use Helpers\BitrixDealHelper;
+use Helpers\LogHelper;
 
 class TelenetWebhookController {
     // Configurações do Bitrix
@@ -42,32 +44,46 @@ class TelenetWebhookController {
             $protocolo = $dados['protocolo'];
             $mensagem = $dados['mensagem'] ?? '';
             
-            // Validar se a mensagem é uma das esperadas
-            $mensagensValidas = ['Arquivo gerado', 'Arquivo retornado', 'Sem retorno'];
-            if (!empty($mensagem) && !in_array($mensagem, $mensagensValidas)) {
+            // Lógica de Negócio baseada na Mensagem
+            if ($mensagem === 'Arquivo gerado') {
+                // Se a mensagem é 'Arquivo gerado', sempre cria um novo deal.
+                $this->criarDeal($dados, $protocolo);
+
+            } elseif (in_array($mensagem, ['Arquivo retornado', 'Sem retorno'])) {
+                // Se for uma mensagem de atualização, busca o deal para atualizar.
+                $campoProtocolo = self::BITRIX_CONFIG['mapeamento_campos']['protocolo'];
+                $filtros = [$campoProtocolo => $protocolo];
+                
+                LogHelper::logBitrixHelpers("Buscando deal com filtros: " . json_encode($filtros));
+
+                $resultadoBusca = BitrixHelper::listarItensCrm(
+                    self::BITRIX_CONFIG['entity_type_id'],
+                    $filtros,
+                    ['id', $campoProtocolo],
+                    1
+                );
+
+                LogHelper::logBitrixHelpers("Resultado da busca: " . json_encode($resultadoBusca));
+                
+                if (isset($resultadoBusca['success']) && $resultadoBusca['success'] && !empty($resultadoBusca['items'])) {
+                    $this->atualizarDeal($resultadoBusca['items'][0], $dados, $protocolo);
+                } else {
+                    // Se era para atualizar mas não encontrou, retorna erro.
+                    http_response_code(404);
+                    echo json_encode([
+                        'success' => false, 
+                        'error' => "Deal com protocolo '$protocolo' não encontrado para atualização."
+                    ]);
+                    return;
+                }
+            } else {
+                // Se a mensagem não for reconhecida, retorna um erro.
                 http_response_code(400);
                 echo json_encode([
                     'success' => false, 
-                    'error' => 'Mensagem inválida. Valores aceitos: ' . implode(', ', $mensagensValidas)
+                    'error' => "Mensagem '$mensagem' não reconhecida. Valores aceitos: Arquivo gerado, Arquivo retornado, Sem retorno."
                 ]);
                 return;
-            }
-
-            // 2. Buscar deal pelo protocolo
-            $campoProtocolo = self::BITRIX_CONFIG['mapeamento_campos']['protocolo'];
-            $filtros = [$campoProtocolo => $protocolo];
-            
-            $resultadoBusca = BitrixHelper::listarItensCrm(
-                self::BITRIX_CONFIG['entity_type_id'],
-                $filtros,
-                ['id', $campoProtocolo],
-                1
-            );
-            
-            if ($resultadoBusca && !empty($resultadoBusca)) {
-                $this->atualizarDeal($resultadoBusca[0], $dados, $protocolo);
-            } else {
-                $this->criarDeal($dados, $protocolo);
             }
 
         } catch (Exception $e) {
@@ -91,7 +107,7 @@ class TelenetWebhookController {
         
         $resultado = BitrixDealHelper::editarDeal(
             self::BITRIX_CONFIG['entity_type_id'],
-            $dealExistente['ID'],
+            $dealExistente['id'],
             $camposParaAtualizar
         );
         
@@ -104,7 +120,7 @@ class TelenetWebhookController {
             'success' => true,
             'message' => 'Deal atualizado com sucesso',
             'protocolo' => $protocolo,
-            'deal_id' => $dealExistente['ID'],
+            'deal_id' => $dealExistente['id'],
             'acao' => 'atualizado',
             'timestamp' => date('Y-m-d H:i:s')
         ]);

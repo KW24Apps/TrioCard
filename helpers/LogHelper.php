@@ -57,7 +57,7 @@ class LogHelper
     // Registra uma rota não encontrada no log
     public static function registrarRotaNaoEncontrada(string $uri, string $method, string $arquivoRota): void
     {
-        $arquivoLog = __DIR__ . '/../../logs/logRotasNaoEncontradas.log';
+        $arquivoLog = __DIR__ . '/../logs/logRotasNaoEncontradas.log';
         $timestamp = date('Y-m-d H:i:s');
         $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
         $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';
@@ -70,7 +70,7 @@ class LogHelper
     // Registra uma mensagem de log para BitrixHelpers
     public static function logBitrixHelpers(string $mensagem, string $contexto = ''): void
     {
-        $arquivoLog = __DIR__ . '/../../logs/BitrixHelpers.log';
+        $arquivoLog = __DIR__ . '/../logs/BitrixHelpers.log';
         $timestamp = date('Y-m-d H:i:s');
         $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
         $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';
@@ -89,7 +89,7 @@ class LogHelper
     // Registra uma mensagem de log para FlashPegasus
     public static function logFlashPegasus(string $mensagem, string $contexto = ''): void
     {
-        $arquivoLog = __DIR__ . '/../../logs/FlashPegasus.log';
+        $arquivoLog = __DIR__ . '/../logs/FlashPegasus.log';
         $timestamp = date('Y-m-d H:i:s');
         $traceId = defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
         $aplicacao = defined('NOME_APLICACAO') ? NOME_APLICACAO : 'desconhecida';

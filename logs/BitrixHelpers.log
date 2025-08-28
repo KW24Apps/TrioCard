@@ -1,0 +1,20 @@
+[2025-08-28 18:18:03] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:19:34] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:19:46] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:19:50] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:30:39] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:30:49] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.add | HTTP: 200 | Erro: 
+[2025-08-28 18:33:02] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:35:42] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
+[2025-08-28 18:35:43] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:35:43] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
+[2025-08-28 18:35:49] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
+[2025-08-28 18:35:49] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:35:49] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
+[2025-08-28 18:37:43] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
+[2025-08-28 18:37:44] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:37:44] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
+[2025-08-28 18:38:44] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
+[2025-08-28 18:38:44] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-28 18:38:44] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
+[2025-08-28 18:38:45] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
