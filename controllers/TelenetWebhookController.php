@@ -65,7 +65,7 @@ class TelenetWebhookController {
                     $this->atualizarDeal($resultadoBusca['items'][0], $dados, $protocolo);
                 } else {
                     // Se era para atualizar mas não encontrou, retorna erro.
-                    http_response_code(404);
+                    http_response_code(400); // Alterado de 404 para 400
                     echo json_encode([
                         'success' => false, 
                         'error' => "Deal com protocolo '$protocolo' não encontrado para atualização."
