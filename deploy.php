@@ -20,9 +20,9 @@ if (!hash_equals($hash, $signature)) {
     exit('Acesso negado. Assinatura inválida.');
 }
 
-// Executa o git pull
+// Executa a sincronização forçada
 // O '2>&1' redireciona a saída de erro para a saída padrão, para que possamos vê-la.
-$output = shell_exec("cd {$repoDir} && git pull 2>&1");
+$output = shell_exec("cd {$repoDir} && git fetch --all && git reset --hard origin/main 2>&1");
 
 echo "<pre>$output</pre>";
 ?>
