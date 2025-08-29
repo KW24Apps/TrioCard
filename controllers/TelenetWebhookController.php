@@ -2,10 +2,12 @@
 // Controller para receber o webhook da Telenet
 require_once __DIR__ . '/../helpers/BitrixHelper.php';
 require_once __DIR__ . '/../helpers/BitrixDealHelper.php';
+require_once __DIR__ . '/../helpers/BitrixCompanyHelper.php';
 require_once __DIR__ . '/../helpers/LogHelper.php';
 
 use Helpers\BitrixHelper;
 use Helpers\BitrixDealHelper;
+use Helpers\BitrixCompanyHelper;
 use Helpers\LogHelper;
 
 class TelenetWebhookController {
@@ -22,17 +24,12 @@ class TelenetWebhookController {
             'data_solicitacao' => 'ufCrm41_1737476250',
             'data_retorno_solicitacao' => 'ufCrm41_1742081702',
             'codigo_cliente' => '',
-            'quant_registros' => ''
+            'quant_registros' => '',
+            'cnpj_empresa' => 'UF_CRM_1641693445101'
         ]
     ];
 
-    /**
-     * Limpa e corrige uma string JSON malformada.
-     * Remove espaços extras, caracteres de controle e tenta adicionar vírgulas faltantes.
-     *
-     * @param string $jsonString A string JSON bruta.
-     * @return string A string JSON tratada.
-     */
+    // Limpa e corrige uma string JSON malformada.
     private function corrigirJson($jsonString) {
         // 1. Remover todos os tipos de espaços em branco (incluindo non-breaking spaces) e 
         // caracteres de controle do início e do fim da string. Isso é um "super trim".
@@ -54,12 +51,7 @@ class TelenetWebhookController {
         return $jsonString;
     }
 
-    /**
-     * Valida um CNPJ com base no algoritmo do Ministério da Fazenda.
-     *
-     * @param string $cnpj O CNPJ a ser validado (pode conter máscara).
-     * @return bool True se o CNPJ for válido, false caso contrário.
-     */
+    // Valida um CNPJ com base no algoritmo do Ministério da Fazenda.
     private function validarCnpj($cnpj) {
         $cnpj = preg_replace('/[^0-9]/', '', (string) $cnpj);
 
@@ -84,12 +76,7 @@ class TelenetWebhookController {
         return $cnpj[13] == ($resto < 2 ? 0 : 11 - $resto);
     }
 
-    /**
-     * Valida, limpa e formata uma string de CNPJ para o padrão XX.XXX.XXX/XXXX-XX.
-     *
-     * @param string $cnpj O CNPJ a ser formatado.
-     * @return string O CNPJ formatado se for válido, ou o valor original caso contrário.
-     */
+    // Valida, limpa e formata um CNPJ para o padrão XX.XXX.XXX/XXXX-XX.
     private function formatarCnpj($cnpj) {
         // 1. Valida o CNPJ. Se não for válido, retorna o valor original.
         if (!$this->validarCnpj($cnpj)) {
@@ -101,6 +88,34 @@ class TelenetWebhookController {
 
         // 3. Aplica a máscara.
         return vsprintf('%s%s.%s%s%s.%s%s%s/%s%s%s%s-%s%s', str_split($cnpjLimpo));
+    }
+
+    // Vincula uma empresa existente ao deal com base no CNPJ.
+    private function vincularEmpresaPorCnpj($dealId, $cnpj) {
+        if (empty($cnpj)) {
+            return;
+        }
+
+        $campoCnpjEmpresa = self::BITRIX_CONFIG['mapeamento_campos']['cnpj_empresa'];
+        
+        // Busca a empresa pelo CNPJ
+        $resultadoBusca = BitrixHelper::listarItensCrm(
+            2, // 2 é o entityTypeId para Company
+            [$campoCnpjEmpresa => $cnpj],
+            ['id'],
+            1
+        );
+
+        if ($resultadoBusca['success'] && !empty($resultadoBusca['items'])) {
+            $companyId = $resultadoBusca['items'][0]['id'];
+
+            // Vincula a empresa encontrada ao deal
+            BitrixDealHelper::editarDeal(
+                self::BITRIX_CONFIG['entity_type_id'],
+                $dealId,
+                ['companyId' => $companyId]
+            );
+        }
     }
 
     // Método principal que executa a lógica do webhook
@@ -214,6 +229,9 @@ class TelenetWebhookController {
         $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
 
         BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $dealExistente['id'], $comment);
+
+        // Tenta vincular a empresa pelo CNPJ
+        $this->vincularEmpresaPorCnpj($dealExistente['id'], $dados['cnpj'] ?? null);
         
         echo json_encode([
             'success' => true,
@@ -253,6 +271,9 @@ class TelenetWebhookController {
         $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
 
         BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $newDealId, $comment);
+
+        // Tenta vincular a empresa pelo CNPJ
+        $this->vincularEmpresaPorCnpj($newDealId, $dados['cnpj'] ?? null);
         
         echo json_encode([
             'success' => true,
