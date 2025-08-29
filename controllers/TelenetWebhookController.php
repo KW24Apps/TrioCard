@@ -25,7 +25,7 @@ class TelenetWebhookController {
             'data_retorno_solicitacao' => 'ufCrm41_1742081702',
             'codigo_cliente' => '',
             'quant_registros' => '',
-            'cnpj_empresa' => 'UF_CRM_1641693445101'
+            'cnpj_empresa' => 'ufcrm_1641693445101'
         ]
     ];
 
@@ -96,18 +96,27 @@ class TelenetWebhookController {
             return;
         }
 
+        // Garante que o CNPJ esteja formatado antes da busca, conforme solicitado.
+        $cnpjFormatado = $this->formatarCnpj($cnpj);
+
         $campoCnpjEmpresa = self::BITRIX_CONFIG['mapeamento_campos']['cnpj_empresa'];
+        $filtros = [$campoCnpjEmpresa => $cnpjFormatado];
+
+        LogHelper::logBitrixHelpers("Iniciando busca de empresa para o Deal ID: $dealId com CNPJ formatado: " . json_encode($filtros), __CLASS__ . '::' . __FUNCTION__);
         
         // Busca a empresa pelo CNPJ (entityTypeId 4 para Company)
         $resultadoBusca = BitrixHelper::listarItensCrm(
             4, // Corrigido: 4 é o entityTypeId para Company
-            [$campoCnpjEmpresa => $cnpj],
+            $filtros,
             ['id'],
             1
         );
 
+        LogHelper::logBitrixHelpers("Resultado da busca de empresa: " . json_encode($resultadoBusca), __CLASS__ . '::' . __FUNCTION__);
+
         if ($resultadoBusca['success'] && !empty($resultadoBusca['items'])) {
             $companyId = $resultadoBusca['items'][0]['id'];
+            LogHelper::logBitrixHelpers("Empresa encontrada com ID: $companyId. Vinculando ao Deal ID: $dealId.", __CLASS__ . '::' . __FUNCTION__);
 
             // Vincula a empresa encontrada ao deal
             BitrixDealHelper::editarDeal(
@@ -115,6 +124,8 @@ class TelenetWebhookController {
                 $dealId,
                 ['companyId' => $companyId]
             );
+        } else {
+            LogHelper::logBitrixHelpers("Nenhuma empresa encontrada para o CNPJ formatado: $cnpjFormatado. Nenhuma vinculação será feita.", __CLASS__ . '::' . __FUNCTION__);
         }
     }
 

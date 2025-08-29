@@ -1,45 +1,13 @@
-[2025-08-28 18:18:03] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:19:34] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:19:46] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:19:50] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:30:39] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:30:49] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.add | HTTP: 200 | Erro: 
-[2025-08-28 18:33:02] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:35:42] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
-[2025-08-28 18:35:43] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:35:43] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
-[2025-08-28 18:35:49] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
-[2025-08-28 18:35:49] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:35:49] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
-[2025-08-28 18:37:43] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
-[2025-08-28 18:37:44] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:37:44] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
-[2025-08-28 18:38:44] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
-[2025-08-28 18:38:44] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:38:44] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
-[2025-08-28 18:38:45] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
-[2025-08-28 18:39:59] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Buscando deal com filtros: {"ufCrm41_1727802471":"asdasd"}
-[2025-08-28 18:39:59] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:39:59] [sem_trace] [desconhecida] [TelenetWebhookController::executar] - Resultado da busca: {"success":true,"items":[{"id":5498,"ufCrm41_1727802471":"asdasd"}],"total":1,"paginas_processadas":1}
-[2025-08-28 18:40:00] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
-[2025-08-28 18:43:51] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:43:51] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
-[2025-08-28 18:43:51] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 400 | Erro:  | Descrição: Owner was not found
-[2025-08-28 18:43:51] [sem_trace] [desconhecida] [Helpers\BitrixHelper::adicionarComentarioTimeline] - FALHA AO ADICIONAR COMENTÁRIO - EntityID: 5498, EntityType: T1054 - Erro: {"error":"OWNER_NOT_FOUND","error_description":"Owner was not found"}
-[2025-08-28 18:44:08] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:44:08] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
-[2025-08-28 18:44:08] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 400 | Erro:  | Descrição: Owner was not found
-[2025-08-28 18:44:08] [sem_trace] [desconhecida] [Helpers\BitrixHelper::adicionarComentarioTimeline] - FALHA AO ADICIONAR COMENTÁRIO - EntityID: 5498, EntityType: T1054 - Erro: {"error":"OWNER_NOT_FOUND","error_description":"Owner was not found"}
-[2025-08-28 18:44:16] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:44:17] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
-[2025-08-28 18:44:17] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 400 | Erro:  | Descrição: Owner was not found
-[2025-08-28 18:44:17] [sem_trace] [desconhecida] [Helpers\BitrixHelper::adicionarComentarioTimeline] - FALHA AO ADICIONAR COMENTÁRIO - EntityID: 5498, EntityType: T1054 - Erro: {"error":"OWNER_NOT_FOUND","error_description":"Owner was not found"}
-[2025-08-28 18:49:19] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:49:19] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
-[2025-08-28 18:49:20] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 200 | Erro: 
-[2025-08-28 18:53:26] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:53:26] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
-[2025-08-28 18:53:26] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 200 | Erro: 
-[2025-08-28 18:55:09] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
-[2025-08-28 18:55:09] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
-[2025-08-28 18:55:10] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 200 | Erro: 
+[2025-08-29 14:45:38] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.add | HTTP: 200 | Erro: 
+[2025-08-29 14:45:38] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 200 | Erro: 
+[2025-08-29 14:45:38] [sem_trace] [desconhecida] [TelenetWebhookController::vincularEmpresaPorCnpj] - Iniciando busca de empresa para o Deal ID: 5540 com CNPJ formatado: {"UF_CRM_1641693445101":"50.684.143\/0001-38"}
+[2025-08-29 14:45:38] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 400 | Erro:  | Descrição: Invalid filter: field 'UF__CRM_1641693445101' is not allowed in filter
+[2025-08-29 14:45:38] [sem_trace] [desconhecida] [TelenetWebhookController::vincularEmpresaPorCnpj] - Resultado da busca de empresa: {"success":false,"debug":{"error":"INVALID_ARG_VALUE","error_description":"Invalid filter: field 'UF__CRM_1641693445101' is not allowed in filter"},"error":"Invalid filter: field 'UF__CRM_1641693445101' is not allowed in filter"}
+[2025-08-29 14:45:38] [sem_trace] [desconhecida] [TelenetWebhookController::vincularEmpresaPorCnpj] - Nenhuma empresa encontrada para o CNPJ formatado: 50.684.143/0001-38. Nenhuma vinculação será feita.
+[2025-08-29 14:46:40] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.add | HTTP: 200 | Erro: 
+[2025-08-29 14:46:40] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.timeline.comment.add | HTTP: 200 | Erro: 
+[2025-08-29 14:46:40] [sem_trace] [desconhecida] [TelenetWebhookController::vincularEmpresaPorCnpj] - Iniciando busca de empresa para o Deal ID: 5542 com CNPJ formatado: {"ufcrm_1641693445101":"50.684.143\/0001-38"}
+[2025-08-29 14:46:41] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.list | HTTP: 200 | Erro: 
+[2025-08-29 14:46:41] [sem_trace] [desconhecida] [TelenetWebhookController::vincularEmpresaPorCnpj] - Resultado da busca de empresa: {"success":true,"items":[{"id":145738}],"total":1,"paginas_processadas":1}
+[2025-08-29 14:46:41] [sem_trace] [desconhecida] [TelenetWebhookController::vincularEmpresaPorCnpj] - Empresa encontrada com ID: 145738. Vinculando ao Deal ID: 5542.
+[2025-08-29 14:46:42] [sem_trace] [desconhecida] [Helpers\BitrixHelper::chamarApi] - [sem_trace] Endpoint: crm.item.update | HTTP: 200 | Erro: 
