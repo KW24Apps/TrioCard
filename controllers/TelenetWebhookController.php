@@ -54,6 +54,55 @@ class TelenetWebhookController {
         return $jsonString;
     }
 
+    /**
+     * Valida um CNPJ com base no algoritmo do Ministério da Fazenda.
+     *
+     * @param string $cnpj O CNPJ a ser validado (pode conter máscara).
+     * @return bool True se o CNPJ for válido, false caso contrário.
+     */
+    private function validarCnpj($cnpj) {
+        $cnpj = preg_replace('/[^0-9]/', '', (string) $cnpj);
+
+        if (strlen($cnpj) != 14 || preg_match('/(\d)\1{13}/', $cnpj)) {
+            return false;
+        }
+
+        for ($i = 0, $j = 5, $soma = 0; $i < 12; $i++) {
+            $soma += $cnpj[$i] * $j;
+            $j = ($j == 2) ? 9 : $j - 1;
+        }
+        $resto = $soma % 11;
+        if ($cnpj[12] != ($resto < 2 ? 0 : 11 - $resto)) {
+            return false;
+        }
+
+        for ($i = 0, $j = 6, $soma = 0; $i < 13; $i++) {
+            $soma += $cnpj[$i] * $j;
+            $j = ($j == 2) ? 9 : $j - 1;
+        }
+        $resto = $soma % 11;
+        return $cnpj[13] == ($resto < 2 ? 0 : 11 - $resto);
+    }
+
+    /**
+     * Valida, limpa e formata uma string de CNPJ para o padrão XX.XXX.XXX/XXXX-XX.
+     *
+     * @param string $cnpj O CNPJ a ser formatado.
+     * @return string O CNPJ formatado se for válido, ou o valor original caso contrário.
+     */
+    private function formatarCnpj($cnpj) {
+        // 1. Valida o CNPJ. Se não for válido, retorna o valor original.
+        if (!$this->validarCnpj($cnpj)) {
+            return $cnpj;
+        }
+
+        // 2. Remove tudo que não for dígito para garantir a limpeza.
+        $cnpjLimpo = preg_replace('/[^0-9]/', '', (string) $cnpj);
+
+        // 3. Aplica a máscara.
+        return vsprintf('%s%s.%s%s%s.%s%s%s/%s%s%s%s-%s%s', str_split($cnpjLimpo));
+    }
+
     // Método principal que executa a lógica do webhook
     public function executar() {
         header('Content-Type: application/json');
@@ -69,6 +118,11 @@ class TelenetWebhookController {
                 $erro = !$dados ? 'JSON inválido ou não enviado' : 'Campo protocolo obrigatório não informado';
                 echo json_encode(['success' => false, 'error' => $erro]);
                 return;
+            }
+
+            // 2. Formatar campos, como o CNPJ
+            if (isset($dados['cnpj'])) {
+                $dados['cnpj'] = $this->formatarCnpj($dados['cnpj']);
             }
 
             $protocolo = $dados['protocolo'];
