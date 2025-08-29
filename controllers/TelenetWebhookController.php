@@ -98,9 +98,9 @@ class TelenetWebhookController {
 
         $campoCnpjEmpresa = self::BITRIX_CONFIG['mapeamento_campos']['cnpj_empresa'];
         
-        // Busca a empresa pelo CNPJ
+        // Busca a empresa pelo CNPJ (entityTypeId 4 para Company)
         $resultadoBusca = BitrixHelper::listarItensCrm(
-            2, // 2 é o entityTypeId para Company
+            4, // Corrigido: 4 é o entityTypeId para Company
             [$campoCnpjEmpresa => $cnpj],
             ['id'],
             1
@@ -229,9 +229,6 @@ class TelenetWebhookController {
         $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
 
         BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $dealExistente['id'], $comment);
-
-        // Tenta vincular a empresa pelo CNPJ
-        $this->vincularEmpresaPorCnpj($dealExistente['id'], $dados['cnpj'] ?? null);
         
         echo json_encode([
             'success' => true,
