@@ -34,9 +34,9 @@ class TelenetWebhookController {
      * @return string A string JSON tratada.
      */
     private function corrigirJson($jsonString) {
-        // 1. Remover caracteres de controle invisíveis e non-breaking spaces.
-        $jsonString = preg_replace('/[\p{C}]/u', '', $jsonString);
-        $jsonString = trim($jsonString);
+        // 1. Remover todos os tipos de espaços em branco (incluindo non-breaking spaces) e 
+        // caracteres de controle do início e do fim da string. Isso é um "super trim".
+        $jsonString = preg_replace('/^[\p{Z}\p{C}]+|[\p{Z}\p{C}]+$/u', '', $jsonString);
 
         // 2. Corrigir quebras de linha que ocorrem logo após um ':'.
         // Isso corrige casos como "key": \n "value".
