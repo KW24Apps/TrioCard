@@ -26,13 +26,38 @@ class TelenetWebhookController {
         ]
     ];
 
+    /**
+     * Limpa e corrige uma string JSON malformada.
+     * Remove espaços extras, caracteres de controle e tenta adicionar vírgulas faltantes.
+     *
+     * @param string $jsonString A string JSON bruta.
+     * @return string A string JSON tratada.
+     */
+    private function corrigirJson($jsonString) {
+        // 1. Remover espaços em branco e caracteres de controle do início e do fim.
+        $jsonString = trim($jsonString);
+
+        // 2. Remover caracteres de controle invisíveis (como non-breaking space) que podem invalidar o JSON.
+        // A expressão regular `\p{C}` abrange várias categorias de caracteres de controle.
+        $jsonString = preg_replace('/\p{C}/u', '', $jsonString);
+        
+        // 3. Adicionar vírgulas faltantes entre os pares chave-valor que estão em linhas separadas.
+        // Procura por uma aspa dupla, seguida por espaços/nova linha, seguida por outra aspa dupla
+        // e insere uma vírgula entre eles.
+        $jsonString = preg_replace('/"(\s*[\r\n]+\s*)"/', '",\1"', $jsonString);
+
+        return $jsonString;
+    }
+
     // Método principal que executa a lógica do webhook
     public function executar() {
         header('Content-Type: application/json');
         
         try {
-            // 1. Ler e validar JSON
-            $dados = json_decode(file_get_contents('php://input'), true);
+            // 1. Ler, corrigir e validar JSON
+            $rawInput = file_get_contents('php://input');
+            $jsonCorrigido = $this->corrigirJson($rawInput);
+            $dados = json_decode($jsonCorrigido, true);
 
             if (!$dados || !isset($dados['protocolo']) || empty($dados['protocolo'])) {
                 http_response_code(400);
