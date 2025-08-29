@@ -34,17 +34,22 @@ class TelenetWebhookController {
      * @return string A string JSON tratada.
      */
     private function corrigirJson($jsonString) {
-        // 1. Remover espaços em branco e caracteres de controle do início e do fim.
+        // 1. Remover caracteres de controle invisíveis e non-breaking spaces.
+        $jsonString = preg_replace('/[\p{C}]/u', '', $jsonString);
         $jsonString = trim($jsonString);
 
-        // 2. Remover caracteres de controle invisíveis (como non-breaking space) que podem invalidar o JSON.
-        // A expressão regular `\p{C}` abrange várias categorias de caracteres de controle.
-        $jsonString = preg_replace('/\p{C}/u', '', $jsonString);
+        // 2. Corrigir quebras de linha que ocorrem logo após um ':'.
+        // Isso corrige casos como "key": \n "value".
+        $jsonString = preg_replace('/:\s*[\r\n]+\s*/', ': ', $jsonString);
         
         // 3. Adicionar vírgulas faltantes entre os pares chave-valor que estão em linhas separadas.
-        // Procura por uma aspa dupla, seguida por espaços/nova linha, seguida por outra aspa dupla
-        // e insere uma vírgula entre eles.
-        $jsonString = preg_replace('/"(\s*[\r\n]+\s*)"/', '",\1"', $jsonString);
+        // Procura por uma aspa dupla, seguida por espaços/nova linha, mas somente se
+        // o que vem depois NÃO é uma vírgula ou uma chave de fechamento.
+        $jsonString = preg_replace('/"(\s*[\r\n]+\s*)"(?![,\}])/', '",\1"', $jsonString);
+
+        // 4. Remover vírgula extra antes de uma chave de fechamento '}'.
+        // Isso pode acontecer se a lógica anterior adicionar uma vírgula no final.
+        $jsonString = preg_replace('/,\s*}/', ' }', $jsonString);
 
         return $jsonString;
     }
