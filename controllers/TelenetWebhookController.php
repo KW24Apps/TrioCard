@@ -16,16 +16,16 @@ class TelenetWebhookController {
         'entity_type_id' => 1054,
         'category' => 195,
         'mapeamento_campos' => [
-            'nome_arquivo' => 'ufCrm41_1737477674',
-            'protocolo' => 'ufCrm41_1727802471',
-            'mensagem' => 'ufCrm41_1737476071', 
-            'cliente' => 'ufCrm41_1727805418',
-            'cnpj' => 'ufCrm41_1727873180',
-            'data_solicitacao' => 'ufCrm41_1737476250',
-            'data_retorno_solicitacao' => 'ufCrm41_1742081702',
+            'nome_arquivo' => 'UF_CRM_8_1756758446',
+            'protocolo' => 'UF_CRM_8_1756758502',
+            'mensagem' => 'UF_CRM_8_1756758530', 
+            'cliente' => 'UF_CRM_8_1756758572',
+            'cnpj' => 'UF_CRM_8_1756758552',
+            'data_solicitacao' => 'UF_CRM_8_1756758589',
+            'data_retorno_solicitacao' => 'UF_CRM_8_1756758616',
             'codigo_cliente' => '',
             'quant_registros' => '',
-            'cnpj_empresa' => 'ufcrm_1641693445101'
+            'cnpj_consulta_empresa' => 'UF_CRM_1741654678'
         ]
     ];
 
@@ -99,7 +99,7 @@ class TelenetWebhookController {
         // Garante que o CNPJ esteja formatado antes da busca, conforme solicitado.
         $cnpjFormatado = $this->formatarCnpj($cnpj);
 
-        $campoCnpjEmpresa = self::BITRIX_CONFIG['mapeamento_campos']['cnpj_empresa'];
+        $campoCnpjEmpresa = self::BITRIX_CONFIG['mapeamento_campos']['cnpj_consulta_empresa'];
         $filtros = [$campoCnpjEmpresa => $cnpjFormatado];
 
         LogHelper::logBitrixHelpers("Iniciando busca de empresa para o Deal ID: $dealId com CNPJ formatado: " . json_encode($filtros), __CLASS__ . '::' . __FUNCTION__);

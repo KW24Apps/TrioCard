@@ -10,7 +10,7 @@ class BitrixHelper
     // Envia requisição para API Bitrix com endpoint e parâmetros fornecidos
     public static function chamarApi($endpoint, $params, $opcoes = [])
     {
-        $webhookBase = trim($GLOBALS['ACESSO_AUTENTICADO']['webhook_bitrix'] ?? 'https://gnapp.bitrix24.com.br/rest/21/z204rrb72cwrv16v');
+        $webhookBase = trim($GLOBALS['ACESSO_AUTENTICADO']['webhook_bitrix'] ?? 'https://triocard.bitrix24.com.br/rest/1/6b9h9uuclndlz6le/');
 
         if (!$webhookBase) {
             LogHelper::logBitrixHelpers("Webhook não informado para chamada do endpoint: $endpoint", __CLASS__ . '::' . __FUNCTION__);
