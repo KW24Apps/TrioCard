@@ -239,7 +239,7 @@ class TelenetWebhookController {
         }
         $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
 
-        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $dealExistente['id'], $comment);
+        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $dealExistente['id'], $comment, 36);
         
         echo json_encode([
             'success' => true,
@@ -278,7 +278,7 @@ class TelenetWebhookController {
         $baseComment = 'TeleNet: Arquivo Gerado na Rede Compras.'; // Mensagem específica para criação
         $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
 
-        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $newDealId, $comment);
+        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $newDealId, $comment, 36);
 
         // Tenta vincular a empresa pelo CNPJ
         $this->vincularEmpresaPorCnpj($newDealId, $dados['cnpj'] ?? null);
