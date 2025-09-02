@@ -16,16 +16,16 @@ class TelenetWebhookController {
         'entity_type_id' => 1042,
         'category' => 14,
         'mapeamento_campos' => [
-            'nome_arquivo' => 'UF_CRM_8_1756758446',
-            'protocolo' => 'UF_CRM_8_1756758502',
-            'mensagem' => 'UF_CRM_8_1756758530', 
-            'cliente' => 'UF_CRM_8_1756758572',
-            'cnpj' => 'UF_CRM_8_1756758552',
-            'data_solicitacao' => 'UF_CRM_8_1756758589',
-            'data_retorno_solicitacao' => 'UF_CRM_8_1756758616',
+            'nome_arquivo' => 'ufCrm8_1756758446',
+            'protocolo' => 'ufCrm8_1756758502',
+            'mensagem' => 'ufCrm8_1756758530', 
+            'cliente' => 'ufCrm8_1756758572',
+            'cnpj' => 'ufCrm8_1756758552',
+            'data_solicitacao' => 'ufCrm8_1756758589',
+            'data_retorno_solicitacao' => 'ufCrm8_1756758616',
             'codigo_cliente' => '',
             'quant_registros' => '',
-            'cnpj_consulta_empresa' => 'UF_CRM_1741654678'
+            'cnpj_consulta_empresa' => 'ufCrm1741654678'
         ]
     ];
 
