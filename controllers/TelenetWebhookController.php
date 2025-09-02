@@ -13,8 +13,8 @@ use Helpers\LogHelper;
 class TelenetWebhookController {
     // Configurações do Bitrix
     private const BITRIX_CONFIG = [
-        'entity_type_id' => 1054,
-        'category' => 195,
+        'entity_type_id' => 1042,
+        'category' => 14,
         'mapeamento_campos' => [
             'nome_arquivo' => 'UF_CRM_8_1756758446',
             'protocolo' => 'UF_CRM_8_1756758502',
