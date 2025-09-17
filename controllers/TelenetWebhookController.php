@@ -300,7 +300,7 @@ class TelenetWebhookController {
             $databaseRepository->inserirPedidoIntegracao($dadosParaSalvar);
             LogHelper::logBitrixHelpers("Dados iniciais do pedido TeleNet salvos no banco de dados local para o Deal ID: $newDealId.", __CLASS__ . '::' . __FUNCTION__);
         } catch (PDOException $e) {
-            LogHelper::logBitrixHelpers("Erro ao salvar dados iniciais do pedido TeleNet no banco de dados local para o Deal ID: $newDealId: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro ao salvar dados iniciais do pedido TeleNet no banco de dados local para o Deal ID: $newDealId: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
             // Não impede a criação do deal no Bitrix, mas registra o erro.
         }
 

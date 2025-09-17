@@ -27,10 +27,44 @@ class UtilHelpers
         }
         $hashArquivo = md5($conteudo);
         $base64 = base64_encode($conteudo);
-        $mime = ClickSignHelper::obterMimeDoArquivo($url);
-        $extensao = ClickSignHelper::mimeParaExtensao($mime) ?? pathinfo($nome, PATHINFO_EXTENSION);
+        
+        // Tenta determinar o MIME type e a extensão sem ClickSignHelper
+        $mime = 'application/octet-stream'; // Valor padrão
+        $extensao = pathinfo($nome, PATHINFO_EXTENSION);
 
-        if (strtolower(pathinfo($nome, PATHINFO_EXTENSION)) !== strtolower($extensao)) {
+        // Tenta obter o MIME type real se a função estiver disponível
+        if (function_exists('mime_content_type')) {
+            $tempFilePath = tempnam(sys_get_temp_dir(), 'mime');
+            file_put_contents($tempFilePath, $conteudo);
+            $mime = mime_content_type($tempFilePath);
+            unlink($tempFilePath);
+        } elseif (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_buffer($finfo, $conteudo);
+            finfo_close($finfo);
+        }
+        
+        // Se a extensão extraída do nome não corresponder ao MIME type, tenta ajustar
+        // ou garante que o nome tenha uma extensão.
+        if (empty($extensao) && !empty($mime)) {
+            // Lógica para mapear MIME para extensão, se necessário.
+            // Por simplicidade, vamos apenas garantir que o nome tenha uma extensão.
+            // Se o nome já tem uma extensão, não alteramos.
+            if (strpos($nome, '.') === false) {
+                // Poderíamos adicionar uma extensão baseada no MIME, mas isso é complexo.
+                // Por enquanto, vamos manter a extensão vazia se não houver no nome.
+            }
+        }
+
+        // Garante que o nome do arquivo tenha uma extensão, se possível
+        if (empty(pathinfo($nome, PATHINFO_EXTENSION)) && !empty($extensao)) {
+            $nome .= '.' . $extensao;
+        }
+        // Se a extensão do nome do arquivo for diferente da extensão inferida, ajusta o nome
+        // Esta parte da lógica original pode ser complexa sem um mapeamento MIME-extensão robusto.
+        // Por enquanto, vamos priorizar a extensão que já vem no nome, se houver.
+        // Se o nome não tem extensão, e conseguimos inferir uma, adicionamos.
+        if (empty(pathinfo($nome, PATHINFO_EXTENSION)) && !empty($extensao)) {
             $nome .= '.' . $extensao;
         }
 

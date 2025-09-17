@@ -47,7 +47,7 @@ class JallCardHelper {
         curl_close($ch);
 
         if ($response === false) {
-            LogHelper::logBitrixHelpers("Erro cURL para {$url}: {$error}", __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro cURL para {$url}: {$error}", __CLASS__ . '::' . __FUNCTION__);
             throw new Exception("Erro na requisição cURL: " . $error);
         }
 
@@ -55,7 +55,7 @@ class JallCardHelper {
 
         if ($httpCode !== 200) {
             $errorMessage = $data['error'] ?? "Erro desconhecido na API JallCard. HTTP Code: {$httpCode}";
-            LogHelper::logBitrixHelpers("Erro na API JallCard para {$url}: {$errorMessage}", __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro na API JallCard para {$url}: {$errorMessage}", __CLASS__ . '::' . __FUNCTION__);
             throw new Exception("Erro na API JallCard: " . $errorMessage);
         }
 

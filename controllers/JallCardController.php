@@ -22,7 +22,7 @@ class JallCardController
             $job->executar();
             echo json_encode(['success' => true, 'message' => 'JallCardFetchJob executado com sucesso.']);
         } catch (Exception $e) {
-            LogHelper::logBitrixHelpers("Erro ao executar JallCardFetchJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro ao executar JallCardFetchJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'Erro ao executar JallCardFetchJob: ' . $e->getMessage()]);
         }
@@ -35,7 +35,7 @@ class JallCardController
             $job->executar();
             echo json_encode(['success' => true, 'message' => 'JallCardLinkJob executado com sucesso.']);
         } catch (Exception $e) {
-            LogHelper::logBitrixHelpers("Erro ao executar JallCardLinkJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro ao executar JallCardLinkJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'Erro ao executar JallCardLinkJob: ' . $e->getMessage()]);
         }
@@ -48,7 +48,7 @@ class JallCardController
             $job->executar();
             echo json_encode(['success' => true, 'message' => 'JallCardStatusUpdateJob executado com sucesso.']);
         } catch (Exception $e) {
-            LogHelper::logBitrixHelpers("Erro ao executar JallCardStatusUpdateJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro ao executar JallCardStatusUpdateJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'Erro ao executar JallCardStatusUpdateJob: ' . $e->getMessage()]);
         }
