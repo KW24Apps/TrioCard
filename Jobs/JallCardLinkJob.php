@@ -60,7 +60,7 @@ class JallCardLinkJob
                     );
                     LogHelper::logBitrixHelpers("Vínculo estabelecido para Deal ID: {$idDealBitrix} com JallCard PedidoProducao: {$matchJallCard['pedido_producao_jallcard']}.", __CLASS__ . '::' . __FUNCTION__);
                 } else {
-                    LogHelper::logBitrixHelpers("Nenhum vínculo encontrado na JallCard para Deal ID: {$idDealBitrix} (Cliente: {$nomeClienteTelenet}, Arquivo: {$nomeArquivoTelenet}).", __CLASS__ . '::' . __FUNCTION__, 'info');
+                    LogHelper::logBitrixHelpers("Nenhum vínculo encontrado na JallCard para Deal ID: {$idDealBitrix} (Cliente: {$nomeClienteTelenet}, Arquivo: {$nomeArquivoTelenet}).", __CLASS__ . '::' . __FUNCTION__);
                     // Opcional: Atualizar status de vinculação na tabela principal para 'ERRO_VINCULACAO' após X tentativas ou um certo período
                 }
             }
@@ -68,9 +68,9 @@ class JallCardLinkJob
             LogHelper::logBitrixHelpers("JallCardLinkJob finalizado.", __CLASS__ . '::' . __FUNCTION__);
 
         } catch (PDOException $e) {
-            LogHelper::logBitrixHelpers("Erro de banco de dados no JallCardLinkJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro de banco de dados no JallCardLinkJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
         } catch (Exception $e) {
-            LogHelper::logBitrixHelpers("Erro geral no JallCardLinkJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro geral no JallCardLinkJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
         }
     }
 }

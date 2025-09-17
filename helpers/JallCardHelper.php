@@ -4,6 +4,7 @@ namespace Helpers;
 require_once __DIR__ . '/LogHelper.php';
 use Helpers\LogHelper;
 use DateTime; // Adicionado para a classe DateTime
+use Exception; // Adicionado para a classe Exception
 
 class JallCardHelper {
     

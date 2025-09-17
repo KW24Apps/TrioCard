@@ -51,7 +51,7 @@ class JallCardStatusUpdateJob
                 $idDealBitrix = $pedido['id_deal_bitrix'];
 
                 if (empty($opJallCard)) {
-                    LogHelper::logBitrixHelpers("OP JallCard vazia para Deal ID: {$idDealBitrix}. Ignorando atualização de status.", __CLASS__ . '::' . __FUNCTION__, 'warning');
+                    LogHelper::logBitrixHelpers("OP JallCard vazia para Deal ID: {$idDealBitrix}. Ignorando atualização de status.", __CLASS__ . '::' . __FUNCTION__);
                     continue;
                 }
 
@@ -74,19 +74,19 @@ class JallCardStatusUpdateJob
                         );
                         LogHelper::logBitrixHelpers("Status JallCard para Deal ID: {$idDealBitrix} atualizado para '{$novoStatusJallCard}' no Bitrix.", __CLASS__ . '::' . __FUNCTION__);
                     } else {
-                        LogHelper::logBitrixHelpers("Campo de mapeamento para status JallCard no Bitrix não configurado. Não foi possível atualizar o Bitrix para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'warning');
+                        LogHelper::logBitrixHelpers("Campo de mapeamento para status JallCard no Bitrix não configurado. Não foi possível atualizar o Bitrix para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__);
                     }
                 } else {
-                    LogHelper::logBitrixHelpers("Não foi possível obter status para OP JallCard: {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'warning');
+                    LogHelper::logBitrixHelpers("Não foi possível obter status para OP JallCard: {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__);
                 }
             }
 
             LogHelper::logBitrixHelpers("JallCardStatusUpdateJob finalizado.", __CLASS__ . '::' . __FUNCTION__);
 
         } catch (PDOException $e) {
-            LogHelper::logBitrixHelpers("Erro de banco de dados no JallCardStatusUpdateJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro de banco de dados no JallCardStatusUpdateJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
         } catch (Exception $e) {
-            LogHelper::logBitrixHelpers("Erro geral no JallCardStatusUpdateJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro geral no JallCardStatusUpdateJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
         }
     }
 }

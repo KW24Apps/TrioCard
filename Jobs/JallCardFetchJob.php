@@ -48,7 +48,7 @@ class JallCardFetchJob
                 $detalhesPedido = JallCardHelper::getPedidoProducao($pedidoProducaoJallCard);
 
                 if (!$detalhesPedido || empty($detalhesPedido['ops'])) {
-                    LogHelper::logBitrixHelpers("Não foi possível obter detalhes ou OP para PedidoProducao {$pedidoProducaoJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'warning');
+                    LogHelper::logBitrixHelpers("Não foi possível obter detalhes ou OP para PedidoProducao {$pedidoProducaoJallCard}.", __CLASS__ . '::' . __FUNCTION__);
                     continue;
                 }
 
@@ -79,9 +79,9 @@ class JallCardFetchJob
             LogHelper::logBitrixHelpers("JallCardFetchJob finalizado.", __CLASS__ . '::' . __FUNCTION__);
 
         } catch (PDOException $e) {
-            LogHelper::logBitrixHelpers("Erro de banco de dados no JallCardFetchJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro de banco de dados no JallCardFetchJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
         } catch (Exception $e) {
-            LogHelper::logBitrixHelpers("Erro geral no JallCardFetchJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            LogHelper::logBitrixHelpers("Erro geral no JallCardFetchJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
         }
     }
 }
