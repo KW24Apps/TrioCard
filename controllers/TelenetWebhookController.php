@@ -4,11 +4,13 @@ require_once __DIR__ . '/../helpers/BitrixHelper.php';
 require_once __DIR__ . '/../helpers/BitrixDealHelper.php';
 require_once __DIR__ . '/../helpers/BitrixCompanyHelper.php';
 require_once __DIR__ . '/../helpers/LogHelper.php';
+require_once __DIR__ . '/../Repositories/DatabaseRepository.php';
 
 use Helpers\BitrixHelper;
 use Helpers\BitrixDealHelper;
 use Helpers\BitrixCompanyHelper;
 use Helpers\LogHelper;
+use Repositories\DatabaseRepository;
 
 class TelenetWebhookController {
     // Configurações do Bitrix
@@ -283,6 +285,25 @@ class TelenetWebhookController {
         // Tenta vincular a empresa pelo CNPJ
         $this->vincularEmpresaPorCnpj($newDealId, $dados['cnpj'] ?? null);
         
+        // Salvar informações iniciais no banco de dados local
+        $databaseRepository = new DatabaseRepository();
+        $dadosParaSalvar = [
+            'protocolo_telenet' => $protocolo,
+            'nome_arquivo_telenet' => $dados['nome_arquivo'] ?? null,
+            'nome_cliente_telenet' => $dados['cliente'] ?? null,
+            'cnpj_cliente_telenet' => $dados['cnpj'] ?? null,
+            'id_deal_bitrix' => $newDealId,
+            'vinculacao_jallcard' => 'PENDENTE' // Status inicial
+        ];
+
+        try {
+            $databaseRepository->inserirPedidoIntegracao($dadosParaSalvar);
+            LogHelper::logBitrixHelpers("Dados iniciais do pedido TeleNet salvos no banco de dados local para o Deal ID: $newDealId.", __CLASS__ . '::' . __FUNCTION__);
+        } catch (PDOException $e) {
+            LogHelper::logBitrixHelpers("Erro ao salvar dados iniciais do pedido TeleNet no banco de dados local para o Deal ID: $newDealId: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'error');
+            // Não impede a criação do deal no Bitrix, mas registra o erro.
+        }
+
         echo json_encode([
             'success' => true,
             'message' => 'Deal criado com sucesso',
