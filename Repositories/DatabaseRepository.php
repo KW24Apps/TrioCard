@@ -59,11 +59,6 @@ class DatabaseRepository
         return $stmt->execute();
     }
 
-    public function getConnection(): PDO
-    {
-        return $this->conn;
-    }
-
     public function getPedidosPendentesVinculacao(): array
     {
         $sql = "SELECT * FROM pedidos_integracao WHERE vinculacao_jallcard = 'PENDENTE'";
@@ -91,15 +86,6 @@ class DatabaseRepository
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':status', $status);
         $stmt->bindValue(':op_jallcard', $opJallCard);
-        return $stmt->execute();
-    }
-
-    public function atualizarIdRastreioTransportador(string $idDealBitrix, ?string $idRastreioTransportador): bool
-    {
-        $sql = "UPDATE pedidos_integracao SET id_rastreio_transportador = :id_rastreio_transportador WHERE id_deal_bitrix = :id_deal_bitrix";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue(':id_rastreio_transportador', $idRastreioTransportador);
-        $stmt->bindValue(':id_deal_bitrix', $idDealBitrix);
         return $stmt->execute();
     }
 
