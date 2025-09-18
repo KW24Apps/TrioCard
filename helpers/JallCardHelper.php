@@ -71,6 +71,25 @@ class JallCardHelper {
         $dataFim = new DateTime();
         $dataInicio = (clone $dataFim)->modify('-7 days');
 
+        return self::getArquivosProcessadosPorPeriodo(
+            $dataInicio->format('Y-m-d\TH:i:s'),
+            $dataFim->format('Y-m-d\TH:i:s')
+        );
+    }
+
+    /**
+     * Consulta arquivos processados por período específico
+     */
+    public static function getArquivosProcessadosPorPeriodo(string $dataInicioStr, string $dataFimStr): ?array
+    {
+        try {
+            $dataInicio = new DateTime($dataInicioStr);
+            $dataFim = new DateTime($dataFimStr);
+        } catch (Exception $e) {
+            LogHelper::logBitrixHelpers("Erro ao parsear datas para getArquivosProcessadosPorPeriodo: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
+            throw new Exception("Formato de data inválido. Use Y-m-d\TH:i:s.");
+        }
+
         $queryParams = [
             'de' => $dataInicio->format('Y-m-d\TH:i:s'),
             'para' => $dataFim->format('Y-m-d\TH:i:s')
