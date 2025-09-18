@@ -64,34 +64,31 @@ try {
             $idRastreamento = null;
             $transportadora = null;
 
+            // Buscar dados da transportadora e ID de rastreamento o mais cedo possível
+            LogHelper::logBitrixHelpers("Buscando documentos para OP {$opJallCard} para ID de rastreamento e transportadora.", 'JallCardStatusUpdateJob::executar');
+            $documentos = JallCardHelper::getDocumentosByOp($opJallCard, true);
+            LogHelper::logBitrixHelpers("Resposta da API JallCard /documentos para OP {$opJallCard}: " . json_encode($documentos), 'JallCardStatusUpdateJob::executar');
+
+            if (!empty($documentos) && isset($documentos[0])) {
+                $doc = $documentos[0];
+                $transportadora = $doc['entregadora'] ?? null;
+                $idRastreamento = $doc['codigoPostagem'] ?? null;
+                LogHelper::logBitrixHelpers("Dados de rastreamento encontrados para OP {$opJallCard}: Transportadora: " . ($transportadora ?? 'N/A') . ", ID: " . ($idRastreamento ?? 'N/A'), 'JallCardStatusUpdateJob::executar');
+            } else {
+                LogHelper::logBitrixHelpers("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora.", 'JallCardStatusUpdateJob::executar');
+            }
+
             // Determinar o status mais recente e sua data
             if (!empty($ordemProducao['producao']['expedicao'])) {
                 $statusDetalhado = 'Expedição';
                 $dataStatus = (new DateTime($ordemProducao['producao']['expedicao']))->format('d/m/Y H:i:s');
                 
-                // Se for Expedição, buscar dados da transportadora e ID de rastreamento
-                LogHelper::logBitrixHelpers("Status é Expedição para OP {$opJallCard}. Buscando documentos para ID de rastreamento.", 'JallCardStatusUpdateJob::executar');
-                $documentos = JallCardHelper::getDocumentosByOp($opJallCard, true);
-                LogHelper::logBitrixHelpers("Resposta da API JallCard /documentos para OP {$opJallCard}: " . json_encode($documentos), 'JallCardStatusUpdateJob::executar');
-
-                if (!empty($documentos) && isset($documentos[0])) {
-                    $doc = $documentos[0];
-                    $transportadora = $doc['entregadora'] ?? null;
-                    $idRastreamento = $doc['codigoPostagem'] ?? null; // Usar codigoPostagem como ID de rastreamento por enquanto
-
-                    if ($transportadora && $idRastreamento) {
-                        $mensagemStatus = "JallCard: Recolhido pela transportadora"; // Mensagem simplificada para campo retorno
-                        $commentTimeline = "JallCard: Status finalizado: {$transportadora} - {$idRastreamento}.\nData: {$dataStatus}";
-                        LogHelper::logBitrixHelpers("ID de rastreamento encontrado para OP {$opJallCard}: Transportadora: {$transportadora}, ID: {$idRastreamento}.", 'JallCardStatusUpdateJob::executar');
-                    } else {
-                        $mensagemStatus = "JallCard: Aguardando expedição sem transportadora"; // Mensagem simplificada para campo retorno
-                        $commentTimeline = "JallCard: Status atualizado para 'Expedição'.\nData: {$dataStatus}";
-                        LogHelper::logBitrixHelpers("Transportadora ou ID de rastreamento não encontrados nos documentos para OP {$opJallCard}. Usando mensagem de expedição padrão.", 'JallCardStatusUpdateJob::executar');
-                    }
+                if ($transportadora && $idRastreamento) {
+                    $mensagemStatus = "JallCard: Recolhido pela transportadora"; // Mensagem simplificada para campo retorno
+                    $commentTimeline = "JallCard: Status finalizado: {$transportadora} - {$idRastreamento}.\nData: {$dataStatus}";
                 } else {
-                    $mensagemStatus = "JallCard: Aguardando expedição sem transportadora"; // Mensagem simplificada para campo retorno
+                    $mensagemStatus = "JallCard: Aguardando recolhimento da transportadora"; // Mensagem simplificada para campo retorno
                     $commentTimeline = "JallCard: Status atualizado para 'Expedição'.\nData: {$dataStatus}";
-                    LogHelper::logBitrixHelpers("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento. Usando mensagem de expedição padrão.", 'JallCardStatusUpdateJob::executar');
                 }
 
             } elseif (!empty($ordemProducao['producao']['preExpedicao'])) {
