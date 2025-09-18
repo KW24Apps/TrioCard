@@ -13,8 +13,6 @@ require_once __DIR__ . '/../helpers/LogHelper.php';
 use Repositories\DatabaseRepository;
 use Helpers\JallCardHelper;
 use Helpers\LogHelper;
-use PDOException;
-use Exception;
 
 // Gera traceId para toda execução do job
 LogHelper::gerarTraceId();
@@ -62,9 +60,9 @@ try {
         $nomeArquivoConvertido = null;
 
         foreach ($detalhesPedido['arquivos'] as $arquivo) {
-            if (str_ends_with($arquivo['nome'], '.TXT.ICS')) {
+            if ((substr($arquivo['nome'], -strlen('.TXT.ICS')) === '.TXT.ICS')) {
                 $nomeArquivoOriginal = $arquivo['nome'];
-            } elseif (str_ends_with($arquivo['nome'], '.env.fpl')) {
+            } elseif ((substr($arquivo['nome'], -strlen('.env.fpl')) === '.env.fpl')) {
                 $nomeArquivoConvertido = $arquivo['nome'];
             }
         }
