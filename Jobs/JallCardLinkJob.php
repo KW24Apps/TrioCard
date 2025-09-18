@@ -9,10 +9,14 @@ if (!defined('NOME_APLICACAO')) {
 require_once __DIR__ . '/../Repositories/DatabaseRepository.php';
 require_once __DIR__ . '/../helpers/JallCardHelper.php';
 require_once __DIR__ . '/../helpers/LogHelper.php';
+require_once __DIR__ . '/../helpers/BitrixDealHelper.php'; // Adicionado
+require_once __DIR__ . '/../helpers/BitrixHelper.php';     // Adicionado
 
 use Repositories\DatabaseRepository;
 use Helpers\JallCardHelper;
 use Helpers\LogHelper;
+use Helpers\BitrixDealHelper; // Adicionado
+use Helpers\BitrixHelper;     // Adicionado
 
 // Gera traceId para toda execução do job
 LogHelper::gerarTraceId();
@@ -78,6 +82,31 @@ try {
                 );
                 LogHelper::logBitrixHelpers("Vínculo estabelecido para Deal ID: {$idDealBitrix} (Telenet: {$keysTelenet['data']}-{$keysTelenet['sequencia']}) com JallCard PedidoProducao: {$jallCardItem['pedido_producao_jallcard']} (JallCard: {$keysJallCard['data']}-{$keysJallCard['sequencia']}).", 'JallCardLinkJob::executar');
                 $vinculadosCount++;
+
+                // 4. Atualizar o Deal no Bitrix24 com os dados da JallCard
+                $camposBitrix = [
+                    'ufCrm8_1758208231' => $jallCardItem['op_jallcard'], // Ordem de Produção
+                    'ufCrm8_1758208290' => $jallCardItem['pedido_producao_jallcard'], // ID Pedido Produção Jall Card
+                    'ufCrm8_1756758530' => 'JallCard: Arquivo recebido com sucesso.' // Campo retorno
+                ];
+                $resultadoUpdateBitrix = BitrixDealHelper::editarDeal(1042, $idDealBitrix, $camposBitrix); // 1042 é o entity_type_id para Deals
+
+                if ($resultadoUpdateBitrix['success']) {
+                    LogHelper::logBitrixHelpers("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com OP: {$jallCardItem['op_jallcard']} e PedidoProducao JallCard: {$jallCardItem['pedido_producao_jallcard']}.", 'JallCardLinkJob::executar');
+                } else {
+                    LogHelper::logBitrixHelpers("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), 'JallCardLinkJob::executar');
+                }
+
+                // 5. Adicionar comentário na Timeline do Deal
+                $entityTypeTimeline = 'dynamic_1042'; // dynamic_ + entity_type_id para Deals
+                $comment = "JallCard: Arquivo recebido.\nOrdem de Produção: {$jallCardItem['op_jallcard']}\nPedido Produção JallCard: {$jallCardItem['pedido_producao_jallcard']}";
+                $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $comment, 36); // 36 é o ID do usuário (exemplo)
+
+                if ($resultadoCommentBitrix['success']) {
+                    LogHelper::logBitrixHelpers("Comentário adicionado à timeline do Deal ID: {$idDealBitrix}.", 'JallCardLinkJob::executar');
+                } else {
+                    LogHelper::logBitrixHelpers("Erro ao adicionar comentário à timeline do Deal ID: {$idDealBitrix}: " . ($resultadoCommentBitrix['error'] ?? 'Erro desconhecido'), 'JallCardLinkJob::executar');
+                }
 
                 // Remover o item vinculado da lista de JallCard para evitar múltiplos matches
                 unset($vinculacoesJallCardPendentes[$indexJallCard]);
