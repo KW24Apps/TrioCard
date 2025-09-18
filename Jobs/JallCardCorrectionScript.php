@@ -25,11 +25,9 @@ LogHelper::gerarTraceId();
 try {
     $databaseRepository = new DatabaseRepository();
 
-    LogHelper::logBitrixHelpers("Iniciando JallCardCorrectionScript: Correção de IDs de rastreamento e transportadoras no Bitrix.", 'JallCardCorrectionScript::executar');
+    LogHelper::logBitrixHelpers("Iniciando JallCardCorrectionScript: Correção de IDs de rastreamento e transportadoras no banco de dados local.", 'JallCardCorrectionScript::executar');
 
     // Obter TODOS os pedidos vinculados (incluindo FINALIZADA/CANCELADA para correção)
-    // Para este script de correção, precisamos de todos os pedidos vinculados,
-    // independentemente do status, para garantir que todos os IDs de rastreamento sejam corrigidos.
     $sqlAllLinked = "SELECT * FROM pedidos_integracao WHERE vinculacao_jallcard = 'VINCULADO'";
     $stmtAllLinked = $databaseRepository->getConnection()->query($sqlAllLinked);
     $pedidosVinculados = $stmtAllLinked->fetchAll(PDO::FETCH_ASSOC);
@@ -57,14 +55,10 @@ try {
         LogHelper::logBitrixHelpers("Resposta da API JallCard para OP {$opJallCard}: " . json_encode($ordemProducao), 'JallCardCorrectionScript::executar');
 
         if ($ordemProducao && isset($ordemProducao['status'])) {
-            $novoStatusJallCard = $ordemProducao['status'];
-            $dataStatus = '';
-            $mensagemStatus = ''; // A mensagem de status principal não será atualizada por este script
-            $commentTimeline = '';
             $idRastreamento = null;
             $transportadora = null;
 
-            // Buscar dados da transportadora e ID de rastreamento o mais cedo possível
+            // Buscar dados da transportadora e ID de rastreamento
             LogHelper::logBitrixHelpers("Buscando documentos para OP {$opJallCard} para ID de rastreamento e transportadora.", 'JallCardCorrectionScript::executar');
             $documentos = JallCardHelper::getDocumentosByOp($opJallCard, true);
             LogHelper::logBitrixHelpers("Resposta da API JallCard /documentos para OP {$opJallCard}: " . json_encode($documentos), 'JallCardCorrectionScript::executar');
@@ -78,44 +72,15 @@ try {
                 LogHelper::logBitrixHelpers("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora.", 'JallCardCorrectionScript::executar');
             }
 
-            // Preparar campos para atualização no Bitrix
-            $camposBitrix = [];
-            $campoNomeTransportadoraBitrix = 'ufCrm8_1758216263';
-            $campoIdRastreamentoBitrix = 'ufCrm8_1758216333';
-
-            if ($transportadora && !empty($campoNomeTransportadoraBitrix)) {
-                $camposBitrix[$campoNomeTransportadoraBitrix] = $transportadora;
-                LogHelper::logBitrixHelpers("Adicionando Nome da Transportadora '{$transportadora}' ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardCorrectionScript::executar');
-            }
-            if ($idRastreamento && !empty($campoIdRastreamentoBitrix)) {
-                $camposBitrix[$campoIdRastreamentoBitrix] = $idRastreamento;
-                LogHelper::logBitrixHelpers("Adicionando ID de rastreamento '{$idRastreamento}' ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardCorrectionScript::executar');
-            }
-
-            // Forçar a atualização no Bitrix para os campos de rastreamento, se houver dados
-            if (!empty($camposBitrix)) {
-                $resultadoUpdateBitrix = BitrixDealHelper::editarDeal(1042, $idDealBitrix, $camposBitrix);
-
-                if ($resultadoUpdateBitrix['success']) {
-                    LogHelper::logBitrixHelpers("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com campos de rastreamento: " . json_encode(array_keys($camposBitrix)) . ".", 'JallCardCorrectionScript::executar');
-                } else {
-                    LogHelper::logBitrixHelpers("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), 'JallCardCorrectionScript::executar');
-                }
+            // Atualizar o ID de rastreamento na tabela local
+            if ($idRastreamento !== null) {
+                $databaseRepository->atualizarIdRastreioTransportador($idDealBitrix, $idRastreamento);
+                LogHelper::logBitrixHelpers("ID de rastreamento '{$idRastreamento}' atualizado no banco de dados local para Deal ID: {$idDealBitrix}.", 'JallCardCorrectionScript::executar');
             } else {
-                LogHelper::logBitrixHelpers("Nenhum campo de rastreamento para atualizar no Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardCorrectionScript::executar');
+                LogHelper::logBitrixHelpers("Nenhum ID de rastreamento encontrado para OP {$opJallCard}. Não atualizando o banco de dados local para Deal ID: {$idDealBitrix}.", 'JallCardCorrectionScript::executar');
             }
 
-            // Opcional: Adicionar um comentário na timeline indicando a correção
-            // if ($transportadora || $idRastreamento) {
-            //     $commentTimeline = "JallCard: Correção de dados de rastreamento. Transportadora: " . ($transportadora ?? 'N/A') . ", ID Rastreamento: " . ($idRastreamento ?? 'N/A');
-            //     $entityTypeTimeline = 'dynamic_1042';
-            //     $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $commentTimeline, 36);
-            //     if ($resultadoCommentBitrix['success']) {
-            //         LogHelper::logBitrixHelpers("Comentário de correção adicionado à timeline do Deal ID: {$idDealBitrix}.", 'JallCardCorrectionScript::executar');
-            //     } else {
-            //         LogHelper::logBitrixHelpers("Erro ao adicionar comentário de correção à timeline do Deal ID: {$idDealBitrix}: " . ($resultadoCommentBitrix['error'] ?? 'Erro desconhecido'), 'JallCardCorrectionScript::executar');
-            //     }
-            // }
+            // Não há atualização do Bitrix neste script de correção, apenas do banco de dados local.
 
         } else {
             LogHelper::logBitrixHelpers("Não foi possível obter status ou a resposta da API JallCard está incompleta para OP: {$opJallCard}. Ignorando correção.", 'JallCardCorrectionScript::executar');
