@@ -124,4 +124,30 @@ class JallCardHelper {
     {
         return self::makeRequest("/ordensProducao/{$codigoOrdem}");
     }
+
+    /**
+     * Extrai a data (YYMMDD) e o número de sequência de um nome de arquivo.
+     * Ex: "ELOTRI_50929497_JAL_250917_141-20250917-060035.TXT.ICS" -> ['data' => '250917', 'sequencia' => '141']
+     * Ex: "ELOTRICL                       250917 141                    .RET" -> ['data' => '250917', 'sequencia' => '141']
+     */
+    public static function extractMatchKeys(string $fileName): ?array
+    {
+        // Padrão para JallCard: _YYMMDD_NNN-
+        if (preg_match('/_(\d{6})_(\d{3,})-/', $fileName, $matchesJallCard)) {
+            return [
+                'data' => $matchesJallCard[1],
+                'sequencia' => $matchesJallCard[2]
+            ];
+        }
+        // Padrão para Telenet: YYMMDD NNN
+        // Assume que a data e sequência são precedidas por espaços e seguidas por espaços ou fim da string
+        if (preg_match('/(\d{6})\s+(\d{3,})/', $fileName, $matchesTelenet)) {
+            return [
+                'data' => $matchesTelenet[1],
+                'sequencia' => $matchesTelenet[2]
+            ];
+        }
+
+        return null;
+    }
 }

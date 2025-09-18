@@ -158,6 +158,13 @@ class DatabaseRepository
         return $result ?: null;
     }
 
+    public function getVinculacoesJallCardPendentes(): array
+    {
+        $sql = "SELECT * FROM vinculacao_jallcard WHERE status_vinculacao_temp = 'AGUARDANDO_VINCULO'";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function updateVinculacaoJallCardStatusTemp(string $pedidoProducaoJallCard, string $status): bool
     {
         $sql = "UPDATE vinculacao_jallcard SET status_vinculacao_temp = :status WHERE pedido_producao_jallcard = :pedido_producao_jallcard";
