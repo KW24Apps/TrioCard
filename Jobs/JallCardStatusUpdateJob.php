@@ -17,6 +17,9 @@ use Helpers\JallCardHelper;
 use Helpers\LogHelper;
 use Helpers\BitrixDealHelper;
 use Helpers\BitrixHelper; // Adicionado para adicionar comentário na timeline
+use DateTime; // Adicionado para a classe DateTime
+use PDOException; // Adicionado para a classe PDOException
+use Exception; // Adicionado para a classe Exception
 
 // Gera traceId para toda execução do job
 LogHelper::gerarTraceId();
@@ -117,12 +120,25 @@ try {
                 $campoRetornoBitrix = 'ufCrm8_1756758530'; // Campo retorno da Telenet
                 $camposBitrix = [$campoRetornoBitrix => $mensagemStatus];
 
-                // Adicionar campo de rastreamento se encontrado
-                $campoRastreamentoBitrix = 'UF_CRM_8_ID_RASTREIO'; // Placeholder: UF do campo de rastreamento no Bitrix
-                if ($idRastreamento && !empty($campoRastreamentoBitrix)) {
-                    $camposBitrix[$campoRastreamentoBitrix] = $idRastreamento;
-                    LogHelper::logBitrixHelpers("Adicionando ID de rastreamento {$idRastreamento} ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar');
+                // Adicionar campos de rastreamento e transportadora se encontrados
+                $campoNomeTransportadoraBitrix = 'ufCrm8_8_1758216263'; // UF do campo Nome da Transportadora no Bitrix
+                $campoIdRastreamentoBitrix = 'ufCrm8_1758216333';     // UF do campo ID Rastreamento Transportadora no Bitrix
+                $campoIdRastreamentoDB = 'id_rastreamento_flash_pegasus'; // Placeholder: Nome do campo no banco de dados local
+
+                if ($transportadora && !empty($campoNomeTransportadoraBitrix)) {
+                    $camposBitrix[$campoNomeTransportadoraBitrix] = $transportadora;
+                    LogHelper::logBitrixHelpers("Adicionando Nome da Transportadora '{$transportadora}' ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar');
                 }
+                if ($idRastreamento && !empty($campoIdRastreamentoBitrix)) {
+                    $camposBitrix[$campoIdRastreamentoBitrix] = $idRastreamento;
+                    LogHelper::logBitrixHelpers("Adicionando ID de rastreamento '{$idRastreamento}' ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar');
+                }
+
+                // TODO: Salvar ID de rastreamento no banco de dados local (pedidos_integracao)
+                // if ($idRastreamento && !empty($campoIdRastreamentoDB)) {
+                //     $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, $campoIdRastreamentoDB, $idRastreamento); // Esta função precisa ser criada no DatabaseRepository
+                //     LogHelper::logBitrixHelpers("ID de rastreamento '{$idRastreamento}' salvo no banco de dados local para Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar');
+                // }
 
                 $resultadoUpdateBitrix = BitrixDealHelper::editarDeal(1042, $idDealBitrix, $camposBitrix); // 1042 é o entity_type_id para Deals
 
