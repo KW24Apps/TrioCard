@@ -27,7 +27,7 @@ class TelenetWebhookController {
             'data_retorno_solicitacao' => 'ufCrm8_1756758616',
             'codigo_cliente' => '',
             'quant_registros' => '',
-            'cnpj_consulta_empresa' => 'ufCrm1741654678'
+            'cnpj_consulta_empresa' => 'ufcrm_1641693445101' // Campo correto para CNPJ de empresas no Bitrix24, conforme logs
         ]
     ];
 
