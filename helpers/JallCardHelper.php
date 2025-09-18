@@ -139,9 +139,9 @@ class JallCardHelper {
                 'sequencia' => $matchesJallCard[2]
             ];
         }
-        // Padrão para Telenet: YYMMDD NNN
+        // Padrão para Telenet: YYMMDD NNN (com ou sem espaços)
         // Assume que a data e sequência são precedidas por espaços e seguidas por espaços ou fim da string
-        if (preg_match('/(\d{6})\s+(\d{3,})/', $fileName, $matchesTelenet)) {
+        if (preg_match('/(\d{6})\s*(\d{3,})/', $fileName, $matchesTelenet)) {
             return [
                 'data' => $matchesTelenet[1],
                 'sequencia' => $matchesTelenet[2]
