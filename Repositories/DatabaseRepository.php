@@ -91,7 +91,9 @@ class DatabaseRepository
 
     public function getPedidosVinculados(): array
     {
-        $sql = "SELECT * FROM pedidos_integracao WHERE vinculacao_jallcard = 'VINCULADO'";
+        $sql = "SELECT * FROM pedidos_integracao 
+                WHERE vinculacao_jallcard = 'VINCULADO' 
+                AND status_jallcard NOT IN ('FINALIZADA', 'CANCELADA')";
         $stmt = $this->conn->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
