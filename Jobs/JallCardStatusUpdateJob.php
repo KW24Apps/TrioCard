@@ -17,9 +17,7 @@ use Helpers\JallCardHelper;
 use Helpers\LogHelper;
 use Helpers\BitrixDealHelper;
 use Helpers\BitrixHelper; // Adicionado para adicionar comentário na timeline
-use DateTime;
-use PDOException;
-use Exception;
+// As classes DateTime, PDOException e Exception são globais e não precisam de 'use' statement.
 
 // Gera traceId para toda execução do job
 LogHelper::gerarTraceId();
@@ -70,13 +68,13 @@ try {
             LogHelper::logBitrixHelpers("Resposta da API JallCard /documentos para OP {$opJallCard}: " . json_encode($documentos), 'JallCardStatusUpdateJob::executar');
 
             if (!empty($documentos) && isset($documentos[0])) {
-                $doc = $documentos[0];
-                $transportadora = $doc['entregadora'] ?? null;
-                $idRastreamento = $doc['codigoPostagem'] ?? null;
-                LogHelper::logBitrixHelpers("Dados de rastreamento encontrados para OP {$opJallCard}: Transportadora: " . ($transportadora ?? 'N/A') . ", ID: " . ($idRastreamento ?? 'N/A'), 'JallCardStatusUpdateJob::executar');
-            } else {
-                LogHelper::logBitrixHelpers("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora.", 'JallCardStatusUpdateJob::executar');
-            }
+                    $doc = $documentos[0];
+                    $transportadora = $doc['entregadora'] ?? null;
+                    $idRastreamento = $doc['codigoPostagem'] ?? null;
+                    LogHelper::logBitrixHelpers("Dados de rastreamento encontrados para OP {$opJallCard}: Transportadora: " . ($transportadora ?? 'N/A') . ", ID: " . ($idRastreamento ?? 'N/A'), 'JallCardStatusUpdateJob::executar');
+                } else {
+                    LogHelper::logBitrixHelpers("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora.", 'JallCardStatusUpdateJob::executar');
+                }
 
             // Determinar o status mais recente e sua data
             if (!empty($ordemProducao['producao']['expedicao'])) {
