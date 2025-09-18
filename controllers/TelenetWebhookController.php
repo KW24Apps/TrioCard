@@ -13,23 +13,14 @@ use Helpers\LogHelper;
 use Repositories\DatabaseRepository;
 
 class TelenetWebhookController {
-    // Configurações do Bitrix
-    private const BITRIX_CONFIG = [
-        'entity_type_id' => 1042,
-        'category' => 14,
-        'mapeamento_campos' => [
-            'nome_arquivo' => 'ufCrm8_1756758446',
-            'protocolo' => 'ufCrm8_1756758502',
-            'mensagem' => 'ufCrm8_1756758530', 
-            'cliente' => 'ufCrm8_1756758572',
-            'cnpj' => 'ufCrm8_1756758552',
-            'data_solicitacao' => 'ufCrm8_1756758589',
-            'data_retorno_solicitacao' => 'ufCrm8_1756758616',
-            'codigo_cliente' => '',
-            'quant_registros' => '',
-            'cnpj_consulta_empresa' => 'ufcrm_1641693445101' // Campo correto para CNPJ de empresas no Bitrix24, conforme logs
-        ]
-    ];
+
+    private static $config;
+
+    public function __construct() {
+        if (self::$config === null) {
+            self::$config = require __DIR__ . '/../config/Variaveis.php';
+        }
+    }
 
     // Limpa e corrige uma string JSON malformada.
     private function corrigirJson($jsonString) {
@@ -101,10 +92,11 @@ class TelenetWebhookController {
         // Garante que o CNPJ esteja formatado antes da busca, conforme solicitado.
         $cnpjFormatado = $this->formatarCnpj($cnpj);
 
-        $campoCnpjEmpresa = self::BITRIX_CONFIG['mapeamento_campos']['cnpj_consulta_empresa'];
+        $bitrixConfig = self::$config['bitrix'];
+        $campoCnpjEmpresa = $bitrixConfig['mapeamento_campos_telenet']['cnpj_consulta_empresa'];
         $filtros = [$campoCnpjEmpresa => $cnpjFormatado];
 
-        LogHelper::logBitrixHelpers("Iniciando busca de empresa para o Deal ID: $dealId com CNPJ formatado: " . json_encode($filtros), __CLASS__ . '::' . __FUNCTION__);
+        LogHelper::logBitrix('Iniciando busca de empresa para o Deal ID: ' . $dealId . ' com CNPJ formatado: ' . json_encode($filtros), __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
         
         // Busca a empresa pelo CNPJ (entityTypeId 4 para Company)
         $resultadoBusca = BitrixHelper::listarItensCrm(
@@ -114,20 +106,18 @@ class TelenetWebhookController {
             1
         );
 
-        LogHelper::logBitrixHelpers("Resultado da busca de empresa: " . json_encode($resultadoBusca), __CLASS__ . '::' . __FUNCTION__);
-
         if ($resultadoBusca['success'] && !empty($resultadoBusca['items'])) {
             $companyId = $resultadoBusca['items'][0]['id'];
-            LogHelper::logBitrixHelpers("Empresa encontrada com ID: $companyId. Vinculando ao Deal ID: $dealId.", __CLASS__ . '::' . __FUNCTION__);
+            LogHelper::logBitrix('Empresa encontrada com ID: ' . $companyId . '. Vinculando ao Deal ID: ' . $dealId . '.', __CLASS__ . '::' . __FUNCTION__, 'INFO');
 
             // Vincula a empresa encontrada ao deal
             BitrixDealHelper::editarDeal(
-                self::BITRIX_CONFIG['entity_type_id'],
+                $bitrixConfig['entity_type_id_deal'],
                 $dealId,
                 ['companyId' => $companyId]
             );
         } else {
-            LogHelper::logBitrixHelpers("Nenhuma empresa encontrada para o CNPJ formatado: $cnpjFormatado. Nenhuma vinculação será feita.", __CLASS__ . '::' . __FUNCTION__);
+            LogHelper::logBitrix('Nenhuma empresa encontrada para o CNPJ formatado: ' . $cnpjFormatado . '. Nenhuma vinculação será feita.', __CLASS__ . '::' . __FUNCTION__, 'WARNING');
         }
     }
 
@@ -136,6 +126,9 @@ class TelenetWebhookController {
         header('Content-Type: application/json');
         
         try {
+            $this->__construct(); // Garante que a configuração seja carregada
+            $bitrixConfig = self::$config['bitrix'];
+
             // 1. Ler, corrigir e validar JSON
             $rawInput = file_get_contents('php://input');
             $jsonCorrigido = $this->corrigirJson($rawInput);
@@ -163,11 +156,11 @@ class TelenetWebhookController {
 
             } elseif (in_array($mensagem, ['Arquivo retornado', 'Sem retorno'])) {
                 // Se for uma mensagem de atualização, busca o deal para atualizar.
-                $campoProtocolo = self::BITRIX_CONFIG['mapeamento_campos']['protocolo'];
+                $campoProtocolo = $bitrixConfig['mapeamento_campos_telenet']['protocolo'];
                 $filtros = [$campoProtocolo => $protocolo];
                 
                 $resultadoBusca = BitrixHelper::listarItensCrm(
-                    self::BITRIX_CONFIG['entity_type_id'],
+                    $bitrixConfig['entity_type_id_deal'],
                     $filtros,
                     ['id', $campoProtocolo],
                     1
@@ -202,19 +195,20 @@ class TelenetWebhookController {
     
     // Atualizar apenas: nome_arquivo, data_retorno_solicitacao e mensagem
     private function atualizarDeal($dealExistente, $dados, $protocolo) {
+        $bitrixConfig = self::$config['bitrix'];
         
         $camposParaAtualizar = [];
         $camposAtualizacao = ['nome_arquivo', 'data_retorno_solicitacao', 'mensagem'];
         
         foreach ($camposAtualizacao as $campo) {
-            $ufBitrix = self::BITRIX_CONFIG['mapeamento_campos'][$campo];
+            $ufBitrix = $bitrixConfig['mapeamento_campos_telenet'][$campo];
             if (isset($dados[$campo]) && $dados[$campo] !== '' && $ufBitrix !== '') {
                 $camposParaAtualizar[$ufBitrix] = $dados[$campo];
             }
         }
         
         $resultado = BitrixDealHelper::editarDeal(
-            self::BITRIX_CONFIG['entity_type_id'],
+            $bitrixConfig['entity_type_id_deal'],
             $dealExistente['id'],
             $camposParaAtualizar
         );
@@ -225,7 +219,7 @@ class TelenetWebhookController {
         }
 
         // Adicionar comentário na timeline
-        $entityTypeTimeline = 'dynamic_' . self::BITRIX_CONFIG['entity_type_id'];
+        $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
         
         $baseComment = '';
         switch ($dados['mensagem']) {
@@ -241,7 +235,7 @@ class TelenetWebhookController {
         }
         $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
 
-        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $dealExistente['id'], $comment, 36);
+        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $dealExistente['id'], $comment, $bitrixConfig['user_id_comments']);
         
         echo json_encode([
             'success' => true,
@@ -255,16 +249,17 @@ class TelenetWebhookController {
  
     // Criar com todos os campos exceto data_retorno_solicitacao
     private function criarDeal($dados, $protocolo) {
+        $bitrixConfig = self::$config['bitrix'];
         $camposParaCriar = [];
-        foreach (self::BITRIX_CONFIG['mapeamento_campos'] as $campoJson => $ufBitrix) {
+        foreach ($bitrixConfig['mapeamento_campos_telenet'] as $campoJson => $ufBitrix) {
             if ($campoJson !== 'data_retorno_solicitacao' && isset($dados[$campoJson]) && $dados[$campoJson] !== '' && $ufBitrix !== '') {
                 $camposParaCriar[$ufBitrix] = $dados[$campoJson];
             }
         }
         
         $resultado = BitrixDealHelper::criarDeal(
-            self::BITRIX_CONFIG['entity_type_id'],
-            self::BITRIX_CONFIG['category'],
+            $bitrixConfig['entity_type_id_deal'],
+            $bitrixConfig['category_deal'],
             $camposParaCriar
         );
         
@@ -275,12 +270,12 @@ class TelenetWebhookController {
 
         // Adicionar comentário na timeline
         $newDealId = $resultado['id'];
-        $entityTypeTimeline = 'dynamic_' . self::BITRIX_CONFIG['entity_type_id'];
+        $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
 
         $baseComment = 'TeleNet: Arquivo Gerado na Rede Compras.'; // Mensagem específica para criação
         $comment = $baseComment . "\nProtocolo TeleNet: " . $protocolo;
 
-        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $newDealId, $comment, 36);
+        BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $newDealId, $comment, $bitrixConfig['user_id_comments']);
 
         // Tenta vincular a empresa pelo CNPJ
         $this->vincularEmpresaPorCnpj($newDealId, $dados['cnpj'] ?? null);
@@ -298,9 +293,9 @@ class TelenetWebhookController {
 
         try {
             $databaseRepository->inserirPedidoIntegracao($dadosParaSalvar);
-            LogHelper::logBitrixHelpers("Dados iniciais do pedido TeleNet salvos no banco de dados local para o Deal ID: $newDealId.", __CLASS__ . '::' . __FUNCTION__);
+            LogHelper::logTrioCardGeral("Dados iniciais do pedido TeleNet salvos no banco de dados local para o Deal ID: $newDealId.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
         } catch (PDOException $e) {
-            LogHelper::logBitrixHelpers("Erro ao salvar dados iniciais do pedido TeleNet no banco de dados local para o Deal ID: $newDealId: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
+            LogHelper::logTrioCardGeral("Erro ao salvar dados iniciais do pedido TeleNet no banco de dados local para o Deal ID: $newDealId: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
             // Não impede a criação do deal no Bitrix, mas registra o erro.
         }
 

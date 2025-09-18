@@ -3,21 +3,32 @@ namespace Helpers;
 
 require_once __DIR__ . '/LogHelper.php';
 use Helpers\LogHelper;
-use DateTime; // Adicionado para a classe DateTime
-use Exception; // Adicionado para a classe Exception
+use Exception; // Re-adicionado para resolver o erro de classe desconhecida
+use DateTime; // Re-adicionado para resolver o erro de classe desconhecida
 
 class JallCardHelper {
-    
-    // Credenciais e URL base da API JallCard
-    private static $baseUrl = "https://api-pr.jallcard.com.br:8143/api";
-    private static $credentials = 'poolempresarial.apiproducaopr:P00lEmp!2025#xR9qT';
+
+    private static $config;
+
+    public static function init() {
+        if (self::$config === null) {
+            self::$config = require __DIR__ . '/../config/Variaveis.php';
+        }
+    }
 
     /**
      * Método principal para chamadas à API JallCard
      */
     private static function makeRequest(string $endpoint, string $method = 'GET', array $queryParams = [], array $bodyParams = []): ?array
     {
-        $url = self::$baseUrl . $endpoint;
+        self::init(); // Garante que a configuração seja carregada
+        $jallcardConfig = self::$config['jallcard'];
+
+        $baseUrl = $jallcardConfig['base_url'];
+        $credentials = $jallcardConfig['credentials'];
+        $sslVerifyPeer = $jallcardConfig['ssl_verify_peer'];
+
+        $url = $baseUrl . $endpoint;
 
         if (!empty($queryParams)) {
             $url .= '?' . http_build_query($queryParams);
@@ -29,11 +40,11 @@ class JallCardHelper {
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_HTTPHEADER => [
-                'Authorization: Basic ' . base64_encode(self::$credentials),
+                'Authorization: Basic ' . base64_encode($credentials),
                 'Content-Type: application/json',
                 'Accept: application/json'
             ],
-            CURLOPT_SSL_VERIFYPEER => false, // CUIDADO: Desabilitar em produção apenas se houver um motivo muito forte e seguro.
+            CURLOPT_SSL_VERIFYPEER => $sslVerifyPeer,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_CONNECTTIMEOUT => 10
         ]);
@@ -48,7 +59,7 @@ class JallCardHelper {
         curl_close($ch);
 
         if ($response === false) {
-            LogHelper::logBitrixHelpers("Erro cURL para {$url}: {$error}", __CLASS__ . '::' . __FUNCTION__);
+            LogHelper::logJallCard("Erro cURL para {$url}: {$error}", __CLASS__ . '::' . __FUNCTION__, 'ERROR');
             throw new Exception("Erro na requisição cURL: " . $error);
         }
 
@@ -56,7 +67,7 @@ class JallCardHelper {
 
         if ($httpCode !== 200) {
             $errorMessage = $data['error'] ?? "Erro desconhecido na API JallCard. HTTP Code: {$httpCode}";
-            LogHelper::logBitrixHelpers("Erro na API JallCard para {$url}: {$errorMessage}", __CLASS__ . '::' . __FUNCTION__);
+            LogHelper::logJallCard("Erro na API JallCard para {$url}: {$errorMessage}", __CLASS__ . '::' . __FUNCTION__, 'ERROR');
             throw new Exception("Erro na API JallCard: " . $errorMessage);
         }
 
@@ -86,7 +97,7 @@ class JallCardHelper {
             $dataInicio = new DateTime($dataInicioStr);
             $dataFim = new DateTime($dataFimStr);
         } catch (Exception $e) {
-            LogHelper::logBitrixHelpers("Erro ao parsear datas para getArquivosProcessadosPorPeriodo: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__);
+            LogHelper::logJallCard("Erro ao parsear datas para getArquivosProcessadosPorPeriodo: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
             throw new Exception("Formato de data inválido. Use Y-m-d\TH:i:s.");
         }
 

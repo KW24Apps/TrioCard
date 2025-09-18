@@ -7,13 +7,23 @@ use Helpers\LogHelper;
 
 class BitrixHelper
 {
+    private static $config;
+
+    public static function init() {
+        if (self::$config === null) {
+            self::$config = require __DIR__ . '/../config/Variaveis.php';
+        }
+    }
+
     // Envia requisição para API Bitrix com endpoint e parâmetros fornecidos
     public static function chamarApi($endpoint, $params, $opcoes = [])
     {
-        $webhookBase = trim($GLOBALS['ACESSO_AUTENTICADO']['webhook_bitrix'] ?? 'https://triocard.bitrix24.com.br/rest/1/6b9h9uuclndlz6le/');
+        self::init();
+        $bitrixConfig = self::$config['bitrix'];
+        $webhookBase = trim($bitrixConfig['webhook_base']);
 
         if (!$webhookBase) {
-            LogHelper::logBitrixHelpers("Webhook não informado para chamada do endpoint: $endpoint", __CLASS__ . '::' . __FUNCTION__);
+            LogHelper::logBitrix("Webhook não informado para chamada do endpoint: $endpoint", __CLASS__ . '::' . __FUNCTION__, 'ERROR');
             return ['error' => 'Webhook não informado'];
         }
 
@@ -41,7 +51,7 @@ class BitrixHelper
             $resumo .= " | Descrição: " . $respostaJson['error_description'];
         }
 
-        LogHelper::logBitrixHelpers($resumo, __CLASS__ . '::' . __FUNCTION__);
+        LogHelper::logBitrix($resumo, __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
 
         return $respostaJson;
     }
@@ -237,9 +247,10 @@ class BitrixHelper
 
         // Log apenas em caso de erro
         if (!isset($resultado['result']) || empty($resultado['result'])) {
-            LogHelper::logBitrixHelpers(
+            LogHelper::logBitrix(
                 "FALHA AO ADICIONAR COMENTÁRIO - EntityID: $entityId, EntityType: $entityType - Erro: " . json_encode($resultado, JSON_UNESCAPED_UNICODE),
-                __CLASS__ . '::' . __FUNCTION__
+                __CLASS__ . '::' . __FUNCTION__,
+                'ERROR'
             );
             return ['success' => false, 'error' => $resultado['error_description'] ?? 'Erro desconhecido'];
         }

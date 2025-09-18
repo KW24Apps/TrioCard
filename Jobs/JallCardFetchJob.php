@@ -14,43 +14,56 @@ use Repositories\DatabaseRepository;
 use Helpers\JallCardHelper;
 use Helpers\LogHelper;
 
-// Gera traceId para toda execução do job
-LogHelper::gerarTraceId();
+class JallCardFetchJob {
+    private static $config;
+
+    public static function init() {
+        if (self::$config === null) {
+            self::$config = require __DIR__ . '/../config/Variaveis.php';
+        }
+    }
+
+    public static function executar() {
+        self::init(); // Garante que a configuração seja carregada
+        // $bitrixConfig = self::$config['bitrix']; // Não é usado diretamente neste job, mas pode ser útil para logs futuros
+
+        // Gera traceId para toda execução do job
+    LogHelper::gerarTraceId();
 
 try {
     $databaseRepository = new DatabaseRepository();
 
-    LogHelper::logBitrixHelpers("Iniciando JallCardFetchJob: Coleta de pedidos da JallCard.", 'JallCardFetchJob::executar');
+    // LogHelper::logJallCard("Iniciando JallCardFetchJob: Coleta de pedidos da JallCard.", 'JallCardFetchJob::executar', 'INFO'); // Removido: log positivo não essencial
 
     // 1. Coletar dados da JallCard (últimos 7 dias)
     $pedidosJallCardRaw = JallCardHelper::getArquivosProcessadosUltimos7Dias();
-    LogHelper::logBitrixHelpers("Dados brutos da JallCard (últimos 7 dias): " . json_encode($pedidosJallCardRaw), 'JallCardFetchJob::executar');
+    // LogHelper::logJallCard("Dados brutos da JallCard (últimos 7 dias): " . json_encode($pedidosJallCardRaw), 'JallCardFetchJob::executar', 'DEBUG'); // Removido: log positivo não essencial
     
     if (empty($pedidosJallCardRaw)) {
-        LogHelper::logBitrixHelpers("Nenhum arquivo processado encontrado na JallCard nos últimos 7 dias.", 'JallCardFetchJob::executar');
+        LogHelper::logJallCard("Nenhum arquivo processado encontrado na JallCard nos últimos 7 dias.", 'JallCardFetchJob::executar', 'WARNING');
         exit("Nenhum arquivo processado encontrado na JallCard nos últimos 7 dias.\n"); // Adicionado para feedback CLI
     }
 
     // 2. Processar cada pedido da JallCard e salvar/atualizar na tabela vinculacao_jallcard
     foreach ($pedidosJallCardRaw as $pedidoJallCardItem) {
         $pedidoProducaoJallCard = $pedidoJallCardItem['pedidoProducao'];
-        LogHelper::logBitrixHelpers("Processando PedidoProducao: {$pedidoProducaoJallCard}", 'JallCardFetchJob::executar');
+        // LogHelper::logJallCard("Processando PedidoProducao: {$pedidoProducaoJallCard}", 'JallCardFetchJob::executar', 'DEBUG'); // Removido: log positivo não essencial
 
         // Verificar se este pedidoProducao já foi processado na tabela temporária
         $vinculacaoExistente = $databaseRepository->findVinculacaoJallCardByPedidoProducao($pedidoProducaoJallCard);
-        LogHelper::logBitrixHelpers("Resultado da busca por vinculação existente para {$pedidoProducaoJallCard}: " . json_encode($vinculacaoExistente), 'JallCardFetchJob::executar');
+        // LogHelper::logJallCard("Resultado da busca por vinculação existente para {$pedidoProducaoJallCard}: " . json_encode($vinculacaoExistente), 'JallCardFetchJob::executar', 'DEBUG'); // Removido: log positivo não essencial
 
         if ($vinculacaoExistente) {
-            LogHelper::logBitrixHelpers("PedidoProducao {$pedidoProducaoJallCard} já processado na tabela temporária. Ignorando.", 'JallCardFetchJob::executar');
+            LogHelper::logJallCard("PedidoProducao {$pedidoProducaoJallCard} já processado na tabela temporária. Ignorando.", 'JallCardFetchJob::executar', 'WARNING');
             continue;
         }
 
         // Obter detalhes do pedido (OP e nomes de arquivos)
         $detalhesPedido = JallCardHelper::getPedidoProducao($pedidoProducaoJallCard);
-        LogHelper::logBitrixHelpers("Detalhes do pedido para {$pedidoProducaoJallCard}: " . json_encode($detalhesPedido), 'JallCardFetchJob::executar');
+        // LogHelper::logJallCard("Detalhes do pedido para {$pedidoProducaoJallCard}: " . json_encode($detalhesPedido), 'JallCardFetchJob::executar', 'DEBUG'); // Removido: log positivo não essencial
 
         if (!$detalhesPedido || empty($detalhesPedido['ops'])) {
-            LogHelper::logBitrixHelpers("Não foi possível obter detalhes ou OP para PedidoProducao {$pedidoProducaoJallCard}.", 'JallCardFetchJob::executar');
+            LogHelper::logJallCard("Não foi possível obter detalhes ou OP para PedidoProducao {$pedidoProducaoJallCard}.", 'JallCardFetchJob::executar', 'ERROR');
             continue;
         }
 
@@ -66,7 +79,7 @@ try {
                 $nomeArquivoConvertido = $arquivo['nome'];
             }
         }
-        LogHelper::logBitrixHelpers("OP: {$opJallCard}, Arquivo Original: {$nomeArquivoOriginal}, Arquivo Convertido: {$nomeArquivoConvertido} para PedidoProducao {$pedidoProducaoJallCard}.", 'JallCardFetchJob::executar');
+        // LogHelper::logJallCard("OP: {$opJallCard}, Arquivo Original: {$nomeArquivoOriginal}, Arquivo Convertido: {$nomeArquivoConvertido} para PedidoProducao {$pedidoProducaoJallCard}.", 'JallCardFetchJob::executar', 'DEBUG'); // Removido: log positivo não essencial
 
         // Inserir na tabela temporária
         $dadosParaInserir = [
@@ -77,16 +90,21 @@ try {
             'data_processamento_jallcard' => $pedidoJallCardItem['dataProcessamento']
         ];
         $databaseRepository->inserirVinculacaoJallCard($dadosParaInserir);
-        LogHelper::logBitrixHelpers("Dados inseridos na tabela vinculacao_jallcard para PedidoProducao {$pedidoProducaoJallCard}: " . json_encode($dadosParaInserir), 'JallCardFetchJob::executar');
+        // LogHelper::logJallCard("Dados inseridos na tabela vinculacao_jallcard para PedidoProducao {$pedidoProducaoJallCard}: " . json_encode($dadosParaInserir), 'JallCardFetchJob::executar', 'INFO'); // Removido: log positivo não essencial
     }
 
-    LogHelper::logBitrixHelpers("JallCardFetchJob finalizado.", 'JallCardFetchJob::executar');
+    // LogHelper::logJallCard("JallCardFetchJob finalizado.", 'JallCardFetchJob::executar', 'INFO'); // Removido: log positivo não essencial
     exit("JallCardFetchJob finalizado com sucesso.\n"); // Adicionado para feedback CLI
 
 } catch (PDOException $e) {
-    LogHelper::logBitrixHelpers("Erro de banco de dados no JallCardFetchJob: " . $e->getMessage(), 'JallCardFetchJob::executar');
+    LogHelper::logJallCard("Erro de banco de dados no JallCardFetchJob: " . $e->getMessage(), 'JallCardFetchJob::executar', 'CRITICAL');
     exit("Erro de banco de dados: " . $e->getMessage() . "\n"); // Adicionado para feedback CLI
 } catch (Exception $e) {
-    LogHelper::logBitrixHelpers("Erro geral no JallCardFetchJob: " . $e->getMessage(), 'JallCardFetchJob::executar');
+    LogHelper::logJallCard("Erro geral no JallCardFetchJob: " . $e->getMessage(), 'JallCardFetchJob::executar', 'CRITICAL');
     exit("Erro geral: " . $e->getMessage() . "\n"); // Adicionado para feedback CLI
 }
+} // Fecha o método executar
+} // Fecha a classe JallCardFetchJob
+
+// Chama o método estático executar
+JallCardFetchJob::executar();

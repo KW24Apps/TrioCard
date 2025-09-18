@@ -4,6 +4,7 @@ namespace Repositories;
 
 use PDO;
 use PDOException;
+use Helpers\LogHelper; // Adicionado para logging
 
 class DatabaseRepository
 {
@@ -23,7 +24,9 @@ class DatabaseRepository
             $this->conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            LogHelper::logTrioCardGeral("Conexão com o banco de dados estabelecida com sucesso.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
         } catch (PDOException $e) {
+            LogHelper::logTrioCardGeral("Erro de conexão com o banco de dados: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'CRITICAL');
             throw new PDOException("Erro de conexão com o banco de dados: " . $e->getMessage());
         }
     }

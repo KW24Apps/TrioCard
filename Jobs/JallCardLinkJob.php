@@ -18,29 +18,42 @@ use Helpers\LogHelper;
 use Helpers\BitrixDealHelper; // Adicionado
 use Helpers\BitrixHelper;     // Adicionado
 
-// Gera traceId para toda execução do job
-LogHelper::gerarTraceId();
+class JallCardLinkJob {
+    private static $config;
+
+    public static function init() {
+        if (self::$config === null) {
+            self::$config = require __DIR__ . '/../config/Variaveis.php';
+        }
+    }
+
+    public static function executar() {
+        self::init(); // Garante que a configuração seja carregada
+        $bitrixConfig = self::$config['bitrix'];
+
+        // Gera traceId para toda execução do job
+        LogHelper::gerarTraceId();
 
 try {
     $databaseRepository = new DatabaseRepository();
 
-    LogHelper::logBitrixHelpers("Iniciando JallCardLinkJob: Vinculação de pedidos pendentes.", 'JallCardLinkJob::executar');
+    // LogHelper::logTrioCardGeral("Iniciando JallCardLinkJob: Vinculação de pedidos pendentes.", 'JallCardLinkJob::executar', 'INFO'); // Removido: log positivo não essencial
 
     // 1. Obter pedidos pendentes de vinculação na tabela principal (pedidos_integracao)
     $pedidosPendentesBitrix = $databaseRepository->getPedidosPendentesVinculacao();
-    LogHelper::logBitrixHelpers("Pedidos pendentes de vinculação na tabela principal: " . count($pedidosPendentesBitrix) . " itens.", 'JallCardLinkJob::executar');
+    // LogHelper::logTrioCardGeral("Pedidos pendentes de vinculação na tabela principal: " . count($pedidosPendentesBitrix) . " itens.", 'JallCardLinkJob::executar', 'DEBUG'); // Removido: log positivo não essencial
 
     if (empty($pedidosPendentesBitrix)) {
-        LogHelper::logBitrixHelpers("Nenhum pedido pendente de vinculação encontrado na tabela principal.", 'JallCardLinkJob::executar');
+        LogHelper::logTrioCardGeral("Nenhum pedido pendente de vinculação encontrado na tabela principal.", 'JallCardLinkJob::executar', 'INFO');
         exit("Nenhum pedido pendente de vinculação encontrado na tabela principal.\n");
     }
 
     // 2. Obter registros pendentes de vinculação na tabela temporária da JallCard
     $vinculacoesJallCardPendentes = $databaseRepository->getVinculacoesJallCardPendentes(); // Assumindo que esta função existe ou será criada
-    LogHelper::logBitrixHelpers("Registros pendentes de vinculação na tabela JallCard: " . count($vinculacoesJallCardPendentes) . " itens.", 'JallCardLinkJob::executar');
+    // LogHelper::logTrioCardGeral("Registros pendentes de vinculação na tabela JallCard: " . count($vinculacoesJallCardPendentes) . " itens.", 'JallCardLinkJob::executar', 'DEBUG'); // Removido: log positivo não essencial
 
     if (empty($vinculacoesJallCardPendentes)) {
-        LogHelper::logBitrixHelpers("Nenhum registro pendente de vinculação encontrado na tabela JallCard.", 'JallCardLinkJob::executar');
+        LogHelper::logTrioCardGeral("Nenhum registro pendente de vinculação encontrado na tabela JallCard.", 'JallCardLinkJob::executar', 'INFO');
         exit("Nenhum registro pendente de vinculação encontrado na tabela JallCard.\n");
     }
 
@@ -50,12 +63,12 @@ try {
         $idDealBitrix = $pedidoBitrix['id_deal_bitrix'];
         $nomeArquivoTelenet = $pedidoBitrix['nome_arquivo_telenet'];
 
-        LogHelper::logBitrixHelpers("Processando pedido Bitrix ID: {$idDealBitrix}, Arquivo Telenet: {$nomeArquivoTelenet}", 'JallCardLinkJob::executar');
+        // LogHelper::logTrioCardGeral("Processando pedido Bitrix ID: {$idDealBitrix}, Arquivo Telenet: {$nomeArquivoTelenet}", 'JallCardLinkJob::executar', 'DEBUG'); // Removido: log positivo não essencial
 
         $keysTelenet = JallCardHelper::extractMatchKeys($nomeArquivoTelenet);
 
         if (!$keysTelenet) {
-            LogHelper::logBitrixHelpers("Não foi possível extrair chaves de comparação do arquivo Telenet: {$nomeArquivoTelenet}", 'JallCardLinkJob::executar');
+            LogHelper::logTrioCardGeral("Não foi possível extrair chaves de comparação do arquivo Telenet: {$nomeArquivoTelenet}", 'JallCardLinkJob::executar', 'WARNING');
             continue;
         }
 
@@ -64,7 +77,7 @@ try {
             $keysJallCard = JallCardHelper::extractMatchKeys($nomeArquivoJallCard);
 
             if (!$keysJallCard) {
-                LogHelper::logBitrixHelpers("Não foi possível extrair chaves de comparação do arquivo JallCard: {$nomeArquivoJallCard}", 'JallCardLinkJob::executar');
+                LogHelper::logTrioCardGeral("Não foi possível extrair chaves de comparação do arquivo JallCard: {$nomeArquivoJallCard}", 'JallCardLinkJob::executar', 'WARNING');
                 continue;
             }
 
@@ -80,32 +93,32 @@ try {
                     $jallCardItem['pedido_producao_jallcard'],
                     'VINCULADO_COM_SUCESSO'
                 );
-                LogHelper::logBitrixHelpers("Vínculo estabelecido para Deal ID: {$idDealBitrix} (Telenet: {$keysTelenet['data']}-{$keysTelenet['sequencia']}) com JallCard PedidoProducao: {$jallCardItem['pedido_producao_jallcard']} (JallCard: {$keysJallCard['data']}-{$keysJallCard['sequencia']}).", 'JallCardLinkJob::executar');
+                LogHelper::logTrioCardGeral("Vínculo estabelecido para Deal ID: {$idDealBitrix} (Telenet: {$keysTelenet['data']}-{$keysTelenet['sequencia']}) com JallCard PedidoProducao: {$jallCardItem['pedido_producao_jallcard']} (JallCard: {$keysJallCard['data']}-{$keysJallCard['sequencia']}).", 'JallCardLinkJob::executar', 'INFO');
                 $vinculadosCount++;
 
                 // 4. Atualizar o Deal no Bitrix24 com os dados da JallCard
                 $camposBitrix = [
-                    'ufCrm8_1758208231' => $jallCardItem['op_jallcard'], // Ordem de Produção
-                    'ufCrm8_1758208290' => $jallCardItem['pedido_producao_jallcard'], // ID Pedido Produção Jall Card
-                    'ufCrm8_1756758530' => 'JallCard: Arquivo recebido com sucesso.' // Campo retorno
+                    $bitrixConfig['mapeamento_campos_jallcard']['op_jallcard'] => $jallCardItem['op_jallcard'], // Ordem de Produção
+                    $bitrixConfig['mapeamento_campos_jallcard']['pedido_producao_jallcard'] => $jallCardItem['pedido_producao_jallcard'], // ID Pedido Produção Jall Card
+                    $bitrixConfig['mapeamento_campos_jallcard']['campo_retorno_telenet'] => 'JallCard: Arquivo recebido com sucesso.' // Campo retorno
                 ];
-                $resultadoUpdateBitrix = BitrixDealHelper::editarDeal(1042, $idDealBitrix, $camposBitrix); // 1042 é o entity_type_id para Deals
+                $resultadoUpdateBitrix = BitrixDealHelper::editarDeal($bitrixConfig['entity_type_id_deal'], $idDealBitrix, $camposBitrix);
 
                 if ($resultadoUpdateBitrix['success']) {
-                    LogHelper::logBitrixHelpers("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com OP: {$jallCardItem['op_jallcard']} e PedidoProducao JallCard: {$jallCardItem['pedido_producao_jallcard']}.", 'JallCardLinkJob::executar');
+                    LogHelper::logBitrix("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com OP: {$jallCardItem['op_jallcard']} e PedidoProducao JallCard: {$jallCardItem['pedido_producao_jallcard']}.", 'JallCardLinkJob::executar', 'INFO');
                 } else {
-                    LogHelper::logBitrixHelpers("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), 'JallCardLinkJob::executar');
+                    LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), 'JallCardLinkJob::executar', 'ERROR');
                 }
 
                 // 5. Adicionar comentário na Timeline do Deal
-                $entityTypeTimeline = 'dynamic_1042'; // dynamic_ + entity_type_id para Deals
+                $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
                 $comment = "JallCard: Arquivo recebido.\nOrdem de Produção: {$jallCardItem['op_jallcard']}\nPedido Produção JallCard: {$jallCardItem['pedido_producao_jallcard']}";
-                $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $comment, 36); // 36 é o ID do usuário (exemplo)
+                $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $comment, $bitrixConfig['user_id_comments']);
 
                 if ($resultadoCommentBitrix['success']) {
-                    LogHelper::logBitrixHelpers("Comentário adicionado à timeline do Deal ID: {$idDealBitrix}.", 'JallCardLinkJob::executar');
+                    LogHelper::logBitrix("Comentário adicionado à timeline do Deal ID: {$idDealBitrix}.", 'JallCardLinkJob::executar', 'INFO');
                 } else {
-                    LogHelper::logBitrixHelpers("Erro ao adicionar comentário à timeline do Deal ID: {$idDealBitrix}: " . ($resultadoCommentBitrix['error'] ?? 'Erro desconhecido'), 'JallCardLinkJob::executar');
+                    LogHelper::logBitrix("Erro ao adicionar comentário à timeline do Deal ID: {$idDealBitrix}: " . ($resultadoCommentBitrix['error'] ?? 'Erro desconhecido'), 'JallCardLinkJob::executar', 'ERROR');
                 }
 
                 // Remover o item vinculado da lista de JallCard para evitar múltiplos matches
@@ -115,13 +128,18 @@ try {
         }
     }
 
-    LogHelper::logBitrixHelpers("JallCardLinkJob finalizado. Total de itens vinculados: {$vinculadosCount}.", 'JallCardLinkJob::executar');
+    // LogHelper::logTrioCardGeral("JallCardLinkJob finalizado. Total de itens vinculados: {$vinculadosCount}.", 'JallCardLinkJob::executar', 'INFO'); // Removido: log positivo não essencial
     exit("JallCardLinkJob finalizado com sucesso. Total de itens vinculados: {$vinculadosCount}.\n");
 
 } catch (PDOException $e) {
-    LogHelper::logBitrixHelpers("Erro de banco de dados no JallCardLinkJob: " . $e->getMessage(), 'JallCardLinkJob::executar');
+    LogHelper::logTrioCardGeral("Erro de banco de dados no JallCardLinkJob: " . $e->getMessage(), 'JallCardLinkJob::executar', 'CRITICAL');
     exit("Erro de banco de dados: " . $e->getMessage() . "\n");
 } catch (Exception $e) {
-    LogHelper::logBitrixHelpers("Erro geral no JallCardLinkJob: " . $e->getMessage(), 'JallCardLinkJob::executar');
+    LogHelper::logTrioCardGeral("Erro geral no JallCardLinkJob: " . $e->getMessage(), 'JallCardLinkJob::executar', 'CRITICAL');
     exit("Erro geral: " . $e->getMessage() . "\n");
 }
+} // Fecha o método executar
+} // Fecha a classe JallCardLinkJob
+
+// Chama o método estático executar
+JallCardLinkJob::executar();
