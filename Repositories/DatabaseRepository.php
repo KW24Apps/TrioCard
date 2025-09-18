@@ -59,6 +59,11 @@ class DatabaseRepository
         return $stmt->execute();
     }
 
+    public function getConnection(): PDO
+    {
+        return $this->conn;
+    }
+
     public function getPedidosPendentesVinculacao(): array
     {
         $sql = "SELECT * FROM pedidos_integracao WHERE vinculacao_jallcard = 'PENDENTE'";
