@@ -17,9 +17,9 @@ use Helpers\JallCardHelper;
 use Helpers\LogHelper;
 use Helpers\BitrixDealHelper;
 use Helpers\BitrixHelper; // Adicionado para adicionar comentário na timeline
-use DateTime; // Adicionado para a classe DateTime
-use PDOException; // Adicionado para a classe PDOException
-use Exception; // Adicionado para a classe Exception
+use DateTime;
+use PDOException;
+use Exception;
 
 // Gera traceId para toda execução do job
 LogHelper::gerarTraceId();
@@ -121,7 +121,7 @@ try {
                 $camposBitrix = [$campoRetornoBitrix => $mensagemStatus];
 
                 // Adicionar campos de rastreamento e transportadora se encontrados
-                $campoNomeTransportadoraBitrix = 'ufCrm8_8_1758216263'; // UF do campo Nome da Transportadora no Bitrix
+                $campoNomeTransportadoraBitrix = 'ufCrm8_1758216263'; // UF do campo Nome da Transportadora no Bitrix
                 $campoIdRastreamentoBitrix = 'ufCrm8_1758216333';     // UF do campo ID Rastreamento Transportadora no Bitrix
                 $campoIdRastreamentoDB = 'id_rastreamento_flash_pegasus'; // Placeholder: Nome do campo no banco de dados local
 

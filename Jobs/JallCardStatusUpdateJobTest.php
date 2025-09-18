@@ -17,9 +17,7 @@ use Helpers\JallCardHelper;
 use Helpers\LogHelper;
 use Helpers\BitrixDealHelper;
 use Helpers\BitrixHelper;
-use DateTime;
-use PDOException;
-use Exception;
+// As classes DateTime, PDOException e Exception são globais e não precisam de 'use' statement.
 
 // Gera traceId para toda execução do job
 LogHelper::gerarTraceId();
@@ -78,6 +76,7 @@ try {
 
                 if (!empty($documentos) && isset($documentos[0])) {
                     $doc = $documentos[0];
+                    LogHelper::logBitrixHelpers("Detalhes do documento para OP {$opJallCard}: Entregadora: " . ($doc['entregadora'] ?? 'N/A') . ", CodigoPostagem: " . ($doc['codigoPostagem'] ?? 'N/A'), 'JallCardStatusUpdateJobTest::executar');
                     $transportadora = $doc['entregadora'] ?? null;
                     $idRastreamento = $doc['codigoPostagem'] ?? null;
 
@@ -120,7 +119,7 @@ try {
                 $campoRetornoBitrix = 'ufCrm8_1756758530';
                 $camposBitrix = [$campoRetornoBitrix => $mensagemStatus];
 
-                $campoNomeTransportadoraBitrix = 'ufCrm8_8_1758216263';
+                $campoNomeTransportadoraBitrix = 'ufCrm8_1758216263'; // UF do campo Nome da Transportadora no Bitrix (corrigido)
                 $campoIdRastreamentoBitrix = 'ufCrm8_1758216333';
                 $campoIdRastreamentoDB = 'id_rastreamento_flash_pegasus';
 
