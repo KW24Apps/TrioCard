@@ -139,6 +139,7 @@ class FlashCourierHelper
         ]);
 
         $headersConsulta = [
+            'Authorization: ' . $accessToken,
             'Content-Type: application/json'
         ];
 
