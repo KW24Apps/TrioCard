@@ -12,11 +12,11 @@ Hash (HMAC-SHA256):
 HTTP CODE: **200**
 Token Gerado:
 ```
-eyJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE3NjUyMTgyNTYsImlzcyI6IlRlWmNPUzZUaFp5YTh5THJGQ1g0KzQ0Z1lDQWJzbTAycmFZc0ZMQm1zazZuVGhwbUt2dUtxbzR5ekdGc3hUMWEiLCJleHAiOjE3NjUzMDQ2NTZ9.cT5QYKOVa09xO_3NV2QK0whMfTuCqJLHwsYDwuZvmPHN544TWIOdTBBC_oNbs_6YSTUMmx6raZ_qAwa48AnqUw
+eyJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE3NjU1NjU2NDksImlzcyI6IlRlWmNPUzZUaFp5YTh5THJGQ1g0KzVGeFBjMVZpZHJSN2xCMUY0WUZPS09uVGhwbUt2dUtxbzR5ekdGc3hUMWEiLCJleHAiOjE3NjU2NTIwNDl9.6smlusp_nqhD0NFeW1lXpXmHbl0NWZWaWrTTux-wXStZMTzXWfdmDolX7oUCFVw30quy8zEsGYeJc3IEq3KjiQ
 ```
 
 ## CONSULTA
-Número consultado: `2510850228001`
+Número consultado: `2510850235001`
 HTTP CODE: **200**
 Body:
 ```
@@ -24,25 +24,25 @@ Body:
   "statusRetorno": "00",
   "hawbs": [
     {
-      "codigoCartao": "2510850228001",
+      "codigoCartao": "2510850235001",
       "meuNumero": "",
-      "hawbId": "08367448419",
-      "dtCol": "27/11/2025 08:49:44.000",
-      "dtPost": "27/11/2025 08:50:55.522",
-      "dtSla": "03/12/2025 23:59:59.000",
+      "hawbId": "08399321065",
+      "dtCol": "01/12/2025 14:34:45.000",
+      "dtPost": "01/12/2025 14:34:54.168",
+      "dtSla": "05/12/2025 23:59:59.000",
       "contrato": "14913",
       "baixa": [
         {
           "grauParentesco": "funcionário",
-          "recebedor": "roselei bueno",
-          "rg": "04911747994",
-          "dtBaixa": "28/11/2025 13:24:24.000",
+          "recebedor": "dinalva  Almeida",
+          "rg": "100306840",
+          "dtBaixa": "02/12/2025 12:58:10.000",
           "tentativas": "1"
         }
       ],
       "historico": [
         {
-          "ocorrencia": "25/11/2025 10:41:16.000",
+          "ocorrencia": "28/11/2025 10:31:29.000",
           "eventoId": "1100",
           "evento": "Em arquivo-aguardando Postagem",
           "arCorreios": "",
@@ -50,7 +50,7 @@ Body:
           "local": "Sao Bernardo do Campo"
         },
         {
-          "ocorrencia": "27/11/2025 08:50:56.329",
+          "ocorrencia": "01/12/2025 14:34:54.742",
           "eventoId": "1400",
           "evento": "Postado - logistica iniciada",
           "arCorreios": "",
@@ -58,7 +58,7 @@ Body:
           "local": "Colombo"
         },
         {
-          "ocorrencia": "27/11/2025 13:22:24.386",
+          "ocorrencia": "01/12/2025 14:40:48.528",
           "eventoId": "2000",
           "evento": "Preparada para a transferencia",
           "arCorreios": "",
@@ -66,7 +66,7 @@ Body:
           "local": "Colombo"
         },
         {
-          "ocorrencia": "28/11/2025 09:50:44.471",
+          "ocorrencia": "02/12/2025 09:08:34.104",
           "eventoId": "3000",
           "evento": "OBJETO Recebido",
           "arCorreios": "",
@@ -74,7 +74,7 @@ Body:
           "local": "CURITIBA"
         },
         {
-          "ocorrencia": "28/11/2025 10:26:57.615",
+          "ocorrencia": "02/12/2025 10:07:40.442",
           "eventoId": "4100",
           "evento": "Entrega em andamento (na rua)",
           "arCorreios": "",
@@ -82,7 +82,7 @@ Body:
           "local": "CURITIBA"
         },
         {
-          "ocorrencia": "28/11/2025 13:25:25.874",
+          "ocorrencia": "02/12/2025 12:58:50.703",
           "eventoId": "4250",
           "evento": "Entrega registrada via RT",
           "arCorreios": "",
@@ -90,7 +90,7 @@ Body:
           "local": "CURITIBA"
         },
         {
-          "ocorrencia": "28/11/2025 16:13:43.785",
+          "ocorrencia": "02/12/2025 16:20:34.002",
           "eventoId": "4300",
           "evento": "Entrega registrada",
           "arCorreios": "",
@@ -98,7 +98,7 @@ Body:
           "local": "CURITIBA"
         },
         {
-          "ocorrencia": "28/11/2025 16:13:46.527",
+          "ocorrencia": "02/12/2025 16:20:35.531",
           "eventoId": "5000",
           "evento": "Comprovante registrado",
           "arCorreios": "",

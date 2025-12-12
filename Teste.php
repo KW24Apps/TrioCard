@@ -93,7 +93,7 @@ log_write("Token Gerado:\n```\n$accessToken\n```\n");
 // ================================================
 // 3) CONSULTA
 // ================================================
-$numeroTeste = "2510850228001";   // ajuste aqui quando quiser
+$numeroTeste = "2510850235001";   // ajuste aqui quando quiser
 
 $payloadConsulta = json_encode([
     "clienteId" => 5917,

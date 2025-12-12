@@ -73,65 +73,41 @@ class FlashCourierTrackingJob {
                             $idDealBitrix = $pedido['id_deal_bitrix'];
                             $statusAtualTransportadoraLocal = isset($pedido['status_transportadora']) ? $pedido['status_transportadora'] : 'INDEFINIDO';
 
-                            $novoStatusTransportadora = 'INDEFINIDO';
                             $mensagemStatus = '';
                             $commentTimeline = '';
                             $dataAtualizacao = (new DateTime())->format('Y-m-d H:i:s');
 
-                            // Lógica para determinar o status mais recente e a mensagem
+                            // Lógica para determinar a mensagem de status e o comentário da timeline
                             if (!empty($baixa)) {
                                 $ultimoEvento = end($baixa);
-                                $novoStatusTransportadora = 'ENTREGUE';
                                 $recebedor = isset($ultimoEvento['recebedor']) ? $ultimoEvento['recebedor'] : 'N/A';
                                 $grauParentesco = isset($ultimoEvento['grauParentesco']) ? $ultimoEvento['grauParentesco'] : 'N/A';
                                 $dtBaixa = isset($ultimoEvento['dtBaixa']) ? $ultimoEvento['dtBaixa'] : $dataAtualizacao;
-                                $mensagemStatus = "Flash Courier: Entrega registrada. Recebedor: {$recebedor} ({$grauParentesco}). Data: {$dtBaixa}";
+                                $mensagemStatus = "Transportadora: Entrega registrada. Recebedor: {$recebedor} ({$grauParentesco}). Data: {$dtBaixa}";
                                 $commentTimeline = "Flash Courier: Pedido ENTREGUE.\n{$mensagemStatus}";
                             } elseif (!empty($historico)) {
                                 $ultimoEvento = end($historico);
-                                $eventoId = isset($ultimoEvento['eventoId']) ? $ultimoEvento['eventoId'] : null;
                                 $eventoDesc = isset($ultimoEvento['evento']) ? $ultimoEvento['evento'] : 'Status desconhecido';
                                 $ocorrencia = isset($ultimoEvento['ocorrencia']) ? $ultimoEvento['ocorrencia'] : $dataAtualizacao;
-
-                                // Mapear eventoId para um status mais genérico
-                                switch ($eventoId) {
-                                    case '4300': // Entrega registrada
-                                    case '5000': // Comprovante registrado
-                                        $novoStatusTransportadora = 'ENTREGUE';
-                                        break;
-                                    case '4100': // Entrega em andamento (na rua)
-                                        $novoStatusTransportadora = 'EM_ROTA';
-                                        break;
-                                    case '4200': // Entrega NAO efetuada
-                                    case '4255': // Entrega NAO efetuada (RT)
-                                        $novoStatusTransportadora = 'TENTATIVA_FALHA';
-                                        break;
-                                    case '1400': // Postado - logistica iniciada
-                                        $novoStatusTransportadora = 'POSTADO';
-                                        break;
-                                    case '1500': // HAWB Cancelada - sem fisico
-                                        $novoStatusTransportadora = 'CANCELADO';
-                                        break;
-                                    default:
-                                        $novoStatusTransportadora = 'EM_PROCESSAMENTO';
-                                        break;
-                                }
-                                $mensagemStatus = "Transportadora: {$ocorrencia} - {$eventoDesc} - " . (isset($ultimoEvento['local']) ? $ultimoEvento['local'] : 'N/A');
-                                $commentTimeline = "Flash Courier: Status atualizado para '{$novoStatusTransportadora}'.\n{$mensagemStatus}";
+                                $local = isset($ultimoEvento['local']) ? $ultimoEvento['local'] : 'N/A';
+                                
+                                $mensagemStatus = "Transportadora: {$ocorrencia} - {$eventoDesc} - {$local}";
+                                $commentTimeline = "Flash Courier: Status atualizado.\n{$mensagemStatus}";
                             } else {
                                 $mensagemStatus = "Transportadora: Sem informações de rastreamento detalhadas.";
-                                $commentTimeline = "Transportadora: Sem informações de rastreamento detalhadas.";
+                                $commentTimeline = "Flash Courier: Sem informações de rastreamento detalhadas.";
                             }
 
-                            // Verificar se o status mudou ou se é a primeira vez que estamos registrando
-                            if ($novoStatusTransportadora !== $statusAtualTransportadoraLocal || empty($statusAtualTransportadoraLocal) || $statusAtualTransportadoraLocal === 'INDEFINIDO') {
-                                // Atualizar no banco de dados local
-                                $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'status_transportadora', $novoStatusTransportadora);
+                            // Sempre atualizar o Bitrix se houver informações de rastreamento
+                            if (!empty($baixa) || !empty($historico)) {
+                                // Atualizar no banco de dados local (opcional, mas mantém a consistência)
+                                // Podemos definir um status genérico aqui se necessário, ou apenas a mensagem formatada
+                                $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'status_transportadora', $mensagemStatus); // Armazena a mensagem formatada
                                 $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'data_atualizacao_transportadora', $dataAtualizacao);
-                                LogHelper::logTrioCardGeral("Status Flash Courier para AR {$ar} (Deal ID: {$idDealBitrix}) atualizado para '{$novoStatusTransportadora}' no banco local (anterior: '{$statusAtualTransportadoraLocal}').", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                                LogHelper::logTrioCardGeral("Status Flash Courier para AR {$ar} (Deal ID: {$idDealBitrix}) atualizado no banco local com a mensagem: '{$mensagemStatus}'.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
 
                                 // Atualizar no Bitrix
-                                $campoStatusTransportadoraBitrix = $bitrixConfig['mapeamento_campos_jallcard']['campo_retorno_telenet']; // Reutilizando o campo de retorno da Telenet para o status geral
+                                $campoStatusTransportadoraBitrix = $bitrixConfig['mapeamento_campos_jallcard']['campo_retorno_telenet']; // Campo de status existente
                                 $camposBitrix = [$campoStatusTransportadoraBitrix => $mensagemStatus];
 
                                 $resultadoUpdateBitrix = BitrixDealHelper::editarDeal($bitrixConfig['entity_type_id_deal'], $idDealBitrix, $camposBitrix);
@@ -152,7 +128,7 @@ class FlashCourierTrackingJob {
                                     LogHelper::logBitrix("Erro ao adicionar comentário de status da transportadora à timeline do Deal ID: {$idDealBitrix}: " . (isset($resultadoCommentBitrix['error']) ? $resultadoCommentBitrix['error'] : 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
                                 }
                             } else {
-                                LogHelper::logTrioCardGeral("Status Flash Courier para AR {$ar} (Deal ID: {$idDealBitrix}) não mudou ('{$novoStatusTransportadora}'). Nenhuma atualização no Bitrix.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+                                LogHelper::logTrioCardGeral("Nenhuma informação de rastreamento detalhada para AR {$ar} (Deal ID: {$idDealBitrix}). Nenhuma atualização no Bitrix.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
                             }
                         }
                     }
