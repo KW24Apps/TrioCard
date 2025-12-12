@@ -56,6 +56,7 @@ return [
         'auth_key' => getenv('FLASH_COURIER_AUTH_KEY') ?: '1eec26193e0c3efe7811aefb3b3671fad31d6f9ece3cb431d633f5c916585ad8', // HMAC SHA 256 de login_prod:senha_prod
         'cliente_id' => getenv('FLASH_COURIER_CLIENTE_ID') ?: 5917, // ID do cliente fornecido pela Flash
         'ctt_id' => explode(',', getenv('FLASH_COURIER_CTT_ID') ?: '14913'), // IDs dos contratos, separados por vírgula
-        'ssl_verify_peer' => getenv('FLASH_COURIER_SSL_VERIFY_PEER') ?: true // Deve ser true em produção
+        'ssl_verify_peer' => getenv('FLASH_COURIER_SSL_VERIFY_PEER') ?: true, // Deve ser true em produção
+        'cookie_file' => getenv('FLASH_COURIER_COOKIE_FILE') ?: __DIR__ . '/../logs/flash_cookies.txt' // Caminho para o arquivo de cookies
     ]
 ];

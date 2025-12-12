@@ -41,6 +41,7 @@ class FlashCourierHelper
         $authKey = $flashConfig['auth_key'];
         $tokenUrl = $flashConfig['token_url'];
         $sslVerifyPeer = $flashConfig['ssl_verify_peer'];
+        $cookieFile = $flashConfig['cookie_file']; // Adicionado
 
         if (empty($login) || empty($senha) || empty($authKey)) {
             LogHelper::logTrioCardGeral("Credenciais Flash Courier (login, senha ou auth_key) não configuradas para produção.", __CLASS__ . '::' . __FUNCTION__, 'CRITICAL');
@@ -61,7 +62,9 @@ class FlashCourierHelper
             'Content-Type: application/json'
         ]);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $sslVerifyPeer);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer ? 2 : 0); // Corrigido para usar 2 ou 0
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer ? 2 : 0);
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile); // Salva cookies
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile); // Envia cookies
 
         $resposta = curl_exec($ch);
         $curlErro = curl_error($ch);
@@ -122,6 +125,7 @@ class FlashCourierHelper
         $cttId = $flashConfig['ctt_id']; // Já é um array devido ao explode em Variaveis.php
         $consultaUrl = $flashConfig['consulta_url'];
         $sslVerifyPeer = $flashConfig['ssl_verify_peer'];
+        $cookieFile = $flashConfig['cookie_file']; // Adicionado
 
         if (empty($numEncCli)) {
             LogHelper::logTrioCardGeral("Nenhum número de encomenda fornecido para consulta de rastreamento.", __CLASS__ . '::' . __FUNCTION__, 'WARNING');
@@ -135,7 +139,6 @@ class FlashCourierHelper
         ]);
 
         $headersConsulta = [
-            'Authorization: Bearer ' . $accessToken, // Reintroduzindo o cabeçalho "Bearer "
             'Content-Type: application/json'
         ];
 
@@ -149,7 +152,8 @@ class FlashCourierHelper
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headersConsulta);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $sslVerifyPeer);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer ? 2 : 0); // Corrigido para usar 2 ou 0
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer ? 2 : 0);
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile); // Envia cookies
 
         $resposta = curl_exec($ch);
         $curlErro = curl_error($ch);
