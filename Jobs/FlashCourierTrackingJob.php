@@ -110,6 +110,8 @@ class FlashCourierTrackingJob {
                                 $campoStatusTransportadoraBitrix = $bitrixConfig['mapeamento_campos_jallcard']['campo_retorno_telenet']; // Campo de status existente
                                 $camposBitrix = [$campoStatusTransportadoraBitrix => $mensagemStatus];
 
+                                LogHelper::logTrioCardGeral("Payload para BitrixDealHelper::editarDeal para Deal ID: {$idDealBitrix}: " . json_encode($camposBitrix), __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+
                                 $resultadoUpdateBitrix = BitrixDealHelper::editarDeal($bitrixConfig['entity_type_id_deal'], $idDealBitrix, $camposBitrix);
 
                                 if ($resultadoUpdateBitrix['success']) {
