@@ -64,14 +64,14 @@ class FlashCourierTrackingJob {
 
                 if ($resultadosRastreamento) {
                     foreach ($resultadosRastreamento as $hawb) {
-                        $ar = $hawb['codigoCartao'] ?? null; // AR/Número de Encomenda Cliente
-                        $historico = $hawb['historico'] ?? [];
-                        $baixa = $hawb['baixa'] ?? [];
+                        $ar = isset($hawb['codigoCartao']) ? $hawb['codigoCartao'] : null; // AR/Número de Encomenda Cliente
+                        $historico = isset($hawb['historico']) ? $hawb['historico'] : [];
+                        $baixa = isset($hawb['baixa']) ? $hawb['baixa'] : [];
 
                         if ($ar && isset($pedidosPorAr[$ar])) {
                             $pedido = $pedidosPorAr[$ar];
                             $idDealBitrix = $pedido['id_deal_bitrix'];
-                            $statusAtualTransportadoraLocal = $pedido['status_transportadora'] ?? 'INDEFINIDO';
+                            $statusAtualTransportadoraLocal = isset($pedido['status_transportadora']) ? $pedido['status_transportadora'] : 'INDEFINIDO';
 
                             $novoStatusTransportadora = 'INDEFINIDO';
                             $mensagemStatus = '';
@@ -82,16 +82,16 @@ class FlashCourierTrackingJob {
                             if (!empty($baixa)) {
                                 $ultimoEvento = end($baixa);
                                 $novoStatusTransportadora = 'ENTREGUE';
-                                $recebedor = $ultimoEvento['recebedor'] ?? 'N/A';
-                                $grauParentesco = $ultimoEvento['grauParentesco'] ?? 'N/A';
-                                $dtBaixa = $ultimoEvento['dtBaixa'] ?? $dataAtualizacao;
+                                $recebedor = isset($ultimoEvento['recebedor']) ? $ultimoEvento['recebedor'] : 'N/A';
+                                $grauParentesco = isset($ultimoEvento['grauParentesco']) ? $ultimoEvento['grauParentesco'] : 'N/A';
+                                $dtBaixa = isset($ultimoEvento['dtBaixa']) ? $ultimoEvento['dtBaixa'] : $dataAtualizacao;
                                 $mensagemStatus = "Flash Courier: Entrega registrada. Recebedor: {$recebedor} ({$grauParentesco}). Data: {$dtBaixa}";
                                 $commentTimeline = "Flash Courier: Pedido ENTREGUE.\n{$mensagemStatus}";
                             } elseif (!empty($historico)) {
                                 $ultimoEvento = end($historico);
-                                $eventoId = $ultimoEvento['eventoId'] ?? null;
-                                $eventoDesc = $ultimoEvento['evento'] ?? 'Status desconhecido';
-                                $ocorrencia = $ultimoEvento['ocorrencia'] ?? $dataAtualizacao;
+                                $eventoId = isset($ultimoEvento['eventoId']) ? $ultimoEvento['eventoId'] : null;
+                                $eventoDesc = isset($ultimoEvento['evento']) ? $ultimoEvento['evento'] : 'Status desconhecido';
+                                $ocorrencia = isset($ultimoEvento['ocorrencia']) ? $ultimoEvento['ocorrencia'] : $dataAtualizacao;
 
                                 // Mapear eventoId para um status mais genérico
                                 switch ($eventoId) {
@@ -116,11 +116,11 @@ class FlashCourierTrackingJob {
                                         $novoStatusTransportadora = 'EM_PROCESSAMENTO';
                                         break;
                                 }
-                                $mensagemStatus = "Flash Courier: {$eventoDesc}. Data: {$ocorrencia}";
+                                $mensagemStatus = "Transportadora: {$ocorrencia} - {$eventoDesc} - " . (isset($ultimoEvento['local']) ? $ultimoEvento['local'] : 'N/A');
                                 $commentTimeline = "Flash Courier: Status atualizado para '{$novoStatusTransportadora}'.\n{$mensagemStatus}";
                             } else {
-                                $mensagemStatus = "Flash Courier: Sem informações de rastreamento detalhadas.";
-                                $commentTimeline = "Flash Courier: Sem informações de rastreamento detalhadas.";
+                                $mensagemStatus = "Transportadora: Sem informações de rastreamento detalhadas.";
+                                $commentTimeline = "Transportadora: Sem informações de rastreamento detalhadas.";
                             }
 
                             // Verificar se o status mudou ou se é a primeira vez que estamos registrando
@@ -139,7 +139,7 @@ class FlashCourierTrackingJob {
                                 if ($resultadoUpdateBitrix['success']) {
                                     LogHelper::logBitrix("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com status da transportadora: '{$mensagemStatus}'.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
                                 } else {
-                                    LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status da transportadora: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                                    LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status da transportadora: " . (isset($resultadoUpdateBitrix['error']) ? $resultadoUpdateBitrix['error'] : 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
                                 }
 
                                 // Adicionar comentário na Timeline do Deal
@@ -149,7 +149,7 @@ class FlashCourierTrackingJob {
                                 if ($resultadoCommentBitrix['success']) {
                                     LogHelper::logBitrix("Comentário de status da transportadora adicionado à timeline do Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
                                 } else {
-                                    LogHelper::logBitrix("Erro ao adicionar comentário de status da transportadora à timeline do Deal ID: {$idDealBitrix}: " . ($resultadoCommentBitrix['error'] ?? 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                                    LogHelper::logBitrix("Erro ao adicionar comentário de status da transportadora à timeline do Deal ID: {$idDealBitrix}: " . (isset($resultadoCommentBitrix['error']) ? $resultadoCommentBitrix['error'] : 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
                                 }
                             } else {
                                 LogHelper::logTrioCardGeral("Status Flash Courier para AR {$ar} (Deal ID: {$idDealBitrix}) não mudou ('{$novoStatusTransportadora}'). Nenhuma atualização no Bitrix.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
