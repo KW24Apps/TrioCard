@@ -28,6 +28,12 @@ class LogHelper
         }
     }
 
+    // Retorna o trace ID atual
+    public static function getTraceId(): string
+    {
+        return defined('TRACE_ID') ? TRACE_ID : 'sem_trace';
+    }
+
     // Registra uma entrada global no log
     public static function registrarEntradaGlobal(string $uri, string $method): void
     {

@@ -61,7 +61,7 @@ class FlashCourierHelper
             'Content-Type: application/json'
         ]);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $sslVerifyPeer);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer ? 2 : 0); // Corrigido para usar 2 ou 0
 
         $resposta = curl_exec($ch);
         $curlErro = curl_error($ch);
@@ -129,7 +129,7 @@ class FlashCourierHelper
             'Content-Type: application/json'
         ]);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $sslVerifyPeer);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer ? 2 : 0); // Corrigido para usar 2 ou 0
 
         $resposta = curl_exec($ch);
         $curlErro = curl_error($ch);

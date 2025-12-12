@@ -1,0 +1,2 @@
+[2025-12-12 15:50:10] [def779d9] [FLASH_COURIER_TRACKING] [CRITICAL] [Repositories\DatabaseRepository::__construct] - Erro de conexão com o banco de dados: SQLSTATE[HY000] [1045] Access denied for user 'kw24co49_kw24'@'localhost' (using password: YES)
+[2025-12-12 15:50:10] [def779d9] [FLASH_COURIER_TRACKING] [CRITICAL] [FlashCourierTrackingJob::executar] - Erro de banco de dados no FlashCourierTrackingJob: Erro de conexão com o banco de dados: SQLSTATE[HY000] [1045] Access denied for user 'kw24co49_kw24'@'localhost' (using password: YES)
