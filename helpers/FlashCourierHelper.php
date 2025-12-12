@@ -71,18 +71,32 @@ class FlashCourierHelper
         $traceId = LogHelper::getTraceId();
         $resumo = "[$traceId] Flash Courier Auth | HTTP: $httpCode | Erro cURL: $curlErro";
 
+        LogHelper::logTrioCardGeral($resumo . " | Resposta bruta da API de Token: " . $resposta, __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+
+        // Limpeza agressiva de caracteres de controle da resposta bruta antes de qualquer processamento
+        $cleanRawToken = preg_replace('/[[:cntrl:]]/', '', $resposta);
+
+        // Encontrar o início do JSON (primeira chave de abertura '{')
+        $jsonStart = strpos($cleanRawToken, '{');
+        $tokenBody = '';
+        if ($jsonStart !== false) {
+            $tokenBody = substr($cleanRawToken, $jsonStart);
+            $tokenBody = trim($tokenBody); // Trim final para espaços em branco
+        }
+
+        $respostaJson = json_decode($tokenBody, true);
+
         if ($httpCode === 200) {
-            $respostaJson = json_decode($resposta, true);
             if (isset($respostaJson['access_token'])) {
-                self::$accessToken = $respostaJson['access_token'];
-                self::$tokenExpiry = time() + ($respostaJson['expires_in'] ?? 86400) - 60; // 1 minuto de margem
-                LogHelper::logTrioCardGeral($resumo . " | Token obtido com sucesso.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                self::$accessToken = preg_replace('/[[:cntrl:]]/', '', $respostaJson['access_token']);
+                self::$tokenExpiry = time() + (isset($respostaJson['expires_in']) ? $respostaJson['expires_in'] : 86400) - 60; // 1 minuto de margem
+                LogHelper::logTrioCardGeral($resumo . " | Token obtido com sucesso (limpo e extraído com precisão). Access Token: " . self::$accessToken, __CLASS__ . '::' . __FUNCTION__, 'INFO');
                 return self::$accessToken;
             } else {
-                LogHelper::logTrioCardGeral($resumo . " | Resposta de autenticação inválida: " . $resposta, __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                LogHelper::logTrioCardGeral($resumo . " | Resposta de autenticação inválida (body após limpeza): " . $tokenBody, __CLASS__ . '::' . __FUNCTION__, 'ERROR');
             }
         } else {
-            LogHelper::logTrioCardGeral($resumo . " | Falha na autenticação. Resposta: " . $resposta, __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+            LogHelper::logTrioCardGeral($resumo . " | Falha na autenticação. Resposta (body após limpeza): " . $tokenBody, __CLASS__ . '::' . __FUNCTION__, 'ERROR');
         }
         return null;
     }
@@ -120,14 +134,20 @@ class FlashCourierHelper
             "numEncCli" => $numEncCli
         ]);
 
+        $headersConsulta = [
+            'Authorization: Bearer ' . $accessToken, // Reintroduzindo o cabeçalho "Bearer "
+            'Content-Type: application/json'
+        ];
+
+        LogHelper::logTrioCardGeral("Flash Courier Consulta Access Token sendo usado: " . $accessToken, __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+        LogHelper::logTrioCardGeral("Flash Courier Consulta Payload: " . $body, __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+        LogHelper::logTrioCardGeral("Flash Courier Consulta Headers: " . json_encode($headersConsulta), __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+
         $ch = curl_init($consultaUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $accessToken,
-            'Content-Type: application/json'
-        ]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headersConsulta);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $sslVerifyPeer);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $sslVerifyPeer ? 2 : 0); // Corrigido para usar 2 ou 0
 
@@ -142,10 +162,10 @@ class FlashCourierHelper
         if ($httpCode === 200) {
             $respostaJson = json_decode($resposta, true);
             if (isset($respostaJson['statusRetorno']) && $respostaJson['statusRetorno'] === '00') {
-                LogHelper::logTrioCardGeral($resumo . " | Consulta de rastreamento bem-sucedida.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                LogHelper::logTrioCardGeral($resumo . " | Consulta de rastreamento bem-sucedida. Resposta: " . $resposta, __CLASS__ . '::' . __FUNCTION__, 'INFO');
                 return $respostaJson['hawbs'] ?? [];
             } else {
-                LogHelper::logTrioCardGeral($resumo . " | Falha na consulta de rastreamento. Status Retorno: " . ($respostaJson['statusRetorno'] ?? 'N/A') . " | Resposta: " . $resposta, __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                LogHelper::logTrioCardGeral($resumo . " | Falha na consulta de rastreamento. Status Retorno: " . (isset($respostaJson['statusRetorno']) ? $respostaJson['statusRetorno'] : 'N/A') . " | Resposta: " . $resposta, __CLASS__ . '::' . __FUNCTION__, 'ERROR');
             }
         } else {
             LogHelper::logTrioCardGeral($resumo . " | Erro HTTP na consulta de rastreamento. Resposta: " . $resposta, __CLASS__ . '::' . __FUNCTION__, 'ERROR');
