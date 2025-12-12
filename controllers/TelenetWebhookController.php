@@ -169,12 +169,9 @@ class TelenetWebhookController {
                 if (isset($resultadoBusca['success']) && $resultadoBusca['success'] && !empty($resultadoBusca['items'])) {
                     $this->atualizarDeal($resultadoBusca['items'][0], $dados, $protocolo);
                 } else {
-                    // Se era para atualizar mas não encontrou, retorna erro.
-                    http_response_code(400); // Alterado de 404 para 400
-                    echo json_encode([
-                        'success' => false, 
-                        'error' => "Deal com protocolo '$protocolo' não encontrado para atualização."
-                    ]);
+                    // Se era para atualizar mas não encontrou, cria um novo deal.
+                    LogHelper::logBitrix("Deal com protocolo '$protocolo' não encontrado para atualização. Criando novo deal.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                    $this->criarDeal($dados, $protocolo);
                     return;
                 }
             } else {

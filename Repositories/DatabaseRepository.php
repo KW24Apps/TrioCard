@@ -177,4 +177,44 @@ class DatabaseRepository
         $stmt->bindValue(':pedido_producao_jallcard', $pedidoProducaoJallCard);
         return $stmt->execute();
     }
+
+    /**
+     * Atualiza um campo específico na tabela pedidos_integracao para um dado id_deal_bitrix.
+     *
+     * @param string $idDealBitrix O ID do Deal no Bitrix.
+     * @param string $campo O nome do campo a ser atualizado.
+     * @param string|null $valor O novo valor para o campo. Pode ser null.
+     * @return bool True se a atualização for bem-sucedida, false caso contrário.
+     */
+    public function atualizarCampoPedidoIntegracao(string $idDealBitrix, string $campo, ?string $valor): bool
+    {
+        // Previne SQL Injection garantindo que o nome do campo seja válido
+        $allowedFields = ['id_rastreio_transportador', 'transportadora_rastreio', 'status_transportadora', 'data_atualizacao_transportadora']; // Adicione outros campos permitidos aqui
+        if (!in_array($campo, $allowedFields)) {
+            LogHelper::logTrioCardGeral("Tentativa de atualizar campo não permitido: {$campo}", __CLASS__ . '::' . __FUNCTION__, 'CRITICAL');
+            return false;
+        }
+
+        $sql = "UPDATE pedidos_integracao SET {$campo} = :valor WHERE id_deal_bitrix = :id_deal_bitrix";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':valor', $valor);
+        $stmt->bindValue(':id_deal_bitrix', $idDealBitrix);
+        return $stmt->execute();
+    }
+
+    /**
+     * Retorna pedidos da tabela pedidos_integracao que possuem id_rastreio_transportador preenchido
+     * e cujo status_transportadora não é 'ENTREGUE' ou 'CANCELADO'.
+     *
+     * @return array Lista de pedidos para rastreamento.
+     */
+    public function getPedidosParaRastreamentoFlashCourier(): array
+    {
+        $sql = "SELECT * FROM pedidos_integracao
+                WHERE id_rastreio_transportador IS NOT NULL
+                AND id_rastreio_transportador != ''
+                AND (status_transportadora IS NULL OR status_transportadora NOT IN ('ENTREGUE', 'CANCELADO'))";
+        $stmt = $this->conn->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

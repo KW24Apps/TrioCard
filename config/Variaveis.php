@@ -47,5 +47,15 @@ return [
             'erros_global' => __DIR__ . '/../logs/erros_global.log',
             'rotas_nao_encontradas' => __DIR__ . '/../logs/logRotasNaoEncontradas.log',
         ]
+    ],
+    'flash_courier' => [
+        'token_url' => getenv('FLASH_COURIER_TOKEN_URL') ?: 'https://webservice.flashpegasus.com.br/FlashPegasus/rest/api/v1/token',
+        'consulta_url' => getenv('FLASH_COURIER_CONSULTA_URL') ?: 'https://webservice.flashpegasus.com.br/FlashPegasus/rest/padrao/v2/consulta',
+        'login' => getenv('FLASH_COURIER_LOGIN') ?: 'ws.personalcardg',
+        'senha' => getenv('FLASH_COURIER_SENHA') ?: 'UwVmwOiNdHC',
+        'auth_key' => getenv('FLASH_COURIER_AUTH_KEY') ?: '1eec26193e0c3efe7811aefb3b3671fad31d6f9ece3cb431d633f5c916585ad8', // HMAC SHA 256 de login_prod:senha_prod
+        'cliente_id' => getenv('FLASH_COURIER_CLIENTE_ID') ?: 4411, // ID do cliente fornecido pela Flash
+        'ctt_id' => explode(',', getenv('FLASH_COURIER_CTT_ID') ?: '6344,6365,6090'), // IDs dos contratos, separados por vírgula
+        'ssl_verify_peer' => getenv('FLASH_COURIER_SSL_VERIFY_PEER') ?: true // Deve ser true em produção
     ]
 ];
