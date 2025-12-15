@@ -155,6 +155,17 @@ try {
                         LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), 'JallCardStatusUpdateJob::executar', 'ERROR');
                     }
 
+                    // Salvar id_rastreamento no banco de dados local (pedidos_integracao)
+                    if ($idRastreamento && $pedido['id_rastreio_transportador'] !== $idRastreamento) {
+                        $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'id_rastreio_transportador', $idRastreamento);
+                        LogHelper::logTrioCardGeral("ID de rastreamento '{$idRastreamento}' salvo no banco local para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                    }
+                    // Salvar nome da transportadora no banco de dados local (pedidos_integracao)
+                    // O campo 'transportadora_rastreio' foi removido da discussão, mas se for necessário no futuro,
+                    // a lógica seria similar: $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'transportadora_rastreio', $transportadora);
+
+                    // Adicionar comentário na Timeline do Deal
+
                     // Adicionar comentário na Timeline do Deal
                     $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
                     $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $commentTimeline, $bitrixConfig['user_id_comments']);

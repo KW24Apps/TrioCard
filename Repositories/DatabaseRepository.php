@@ -189,7 +189,13 @@ class DatabaseRepository
     public function atualizarCampoPedidoIntegracao(string $idDealBitrix, string $campo, ?string $valor): bool
     {
         // Previne SQL Injection garantindo que o nome do campo seja válido
-        $allowedFields = ['id_rastreio_transportador', 'transportadora_rastreio', 'status_transportadora', 'data_atualizacao_transportadora']; // Adicione outros campos permitidos aqui
+        $allowedFields = [
+            'id_rastreio_transportador', 
+            'transportadora_rastreio', // Mantido caso o usuário mude de ideia ou para futura expansão
+            'status_transportadora', 
+            'data_atualizacao_transportadora',
+            'status_jallcard' // Adicionado para permitir atualização do status JallCard
+        ]; 
         if (!in_array($campo, $allowedFields)) {
             LogHelper::logTrioCardGeral("Tentativa de atualizar campo não permitido: {$campo}", __CLASS__ . '::' . __FUNCTION__, 'CRITICAL');
             return false;
