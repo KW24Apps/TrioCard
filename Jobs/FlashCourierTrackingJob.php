@@ -100,8 +100,17 @@ class FlashCourierTrackingJob {
                             $novoStatusLocal = $mensagemStatus;
                         }
 
-                        // Atualizar no banco de dados local se o status mudou ou se é a primeira vez
+                        // Lógica para determinar se a atualização deve ocorrer
+                        $deveAtualizar = false;
+
+                        // Se o status local for indefinido ou diferente do novo status
                         if ($novoStatusLocal !== $statusAtualTransportadoraLocal) {
+                            $deveAtualizar = true;
+                        }
+
+                        // Se houver um novo status e a atualização for necessária
+                        if ($deveAtualizar) {
+                            // Atualizar no banco de dados local
                             $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'status_transportadora', $novoStatusLocal);
                             LogHelper::logTrioCardGeral("Status Flash Courier para AR {$ar} (Deal ID: {$idDealBitrix}) atualizado no banco local para: '{$novoStatusLocal}'.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
 
@@ -112,7 +121,7 @@ class FlashCourierTrackingJob {
                             if ($resultadoUpdateBitrix['success']) {
                                 LogHelper::logBitrix("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com status da transportadora: '{$mensagemStatus}'.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
                             } else {
-                                LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status da transportadora: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                                LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
                             }
 
                             // Adicionar comentário na Timeline
@@ -124,7 +133,7 @@ class FlashCourierTrackingJob {
                                 LogHelper::logBitrix("Erro ao adicionar comentário de rastreamento à timeline do Deal ID: {$idDealBitrix}: " . ($resultadoCommentBitrix['error'] ?? 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
                             }
                         } else {
-                            LogHelper::logTrioCardGeral("Status Flash Courier para AR {$ar} (Deal ID: {$idDealBitrix}) não mudou. Nenhuma atualização no Bitrix.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+                            LogHelper::logTrioCardGeral("Status Flash Courier para AR {$ar} (Deal ID: {$idDealBitrix}) não mudou ou não é um avanço. Nenhuma atualização no Bitrix.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
                         }
                     } else {
                         LogHelper::logTrioCardGeral("Nenhuma informação de rastreamento detalhada para AR {$ar} (Deal ID: {$idDealBitrix}). Nenhuma atualização no Bitrix.", __CLASS__ . '::' . __FUNCTION__, 'WARNING');
