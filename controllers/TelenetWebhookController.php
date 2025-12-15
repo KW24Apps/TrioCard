@@ -151,7 +151,8 @@ class TelenetWebhookController {
             $operadora = $dados['operadora'] ?? '';
 
             // 3. Lógica de validação da operadora
-            $operadoraNormalizada = trim(mb_strtoupper($operadora, 'UTF-8'));
+            $operadoraNormalizada = str_replace(' ', '', trim(mb_strtoupper($operadora, 'UTF-8'))); // Remove espaços e converte para maiúsculas
+            
             if ($operadoraNormalizada === 'PERSONAL') {
                 LogHelper::logTrioCardGeral("Operadora 'PERSONAL' detectada para protocolo '$protocolo'. Ignorando processamento.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
                 http_response_code(200); // Retorna sucesso para a Telenet, mas não processa
@@ -163,7 +164,7 @@ class TelenetWebhookController {
                     'timestamp' => date('Y-m-d H:i:s')
                 ]);
                 return;
-            } elseif ($operadoraNormalizada !== 'TRIO CARD') {
+            } elseif ($operadoraNormalizada !== 'TRIOCARD') { // Compara com 'TRIOCARD' sem espaços
                 LogHelper::logTrioCardGeral("Operadora '$operadora' não reconhecida para protocolo '$protocolo'.", __CLASS__ . '::' . __FUNCTION__, 'WARNING');
                 http_response_code(400);
                 echo json_encode([
