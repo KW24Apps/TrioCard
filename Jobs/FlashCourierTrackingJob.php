@@ -59,6 +59,12 @@ class FlashCourierTrackingJob {
 
             $lotesArs = array_chunk($arsParaConsulta, 100); // Dividir em lotes de 100
 
+            $dealsParaAtualizar = [];
+            $comentariosParaAdicionar = [];
+            $campoStatusTransportadoraBitrix = $bitrixConfig['mapeamento_campos_jallcard']['campo_retorno_telenet']; // Campo de status existente
+            $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
+            $authorIdComments = $bitrixConfig['user_id_comments'];
+
             foreach ($lotesArs as $lote) {
                 $resultadosRastreamento = FlashCourierHelper::consultarRastreamento($lote);
 
@@ -71,7 +77,7 @@ class FlashCourierTrackingJob {
                         if ($ar && isset($pedidosPorAr[$ar])) {
                             $pedido = $pedidosPorAr[$ar];
                             $idDealBitrix = $pedido['id_deal_bitrix'];
-                            $statusAtualTransportadoraLocal = isset($pedido['status_transportadora']) ? $pedido['status_transportadora'] : 'INDEFINIDO';
+                            // $statusAtualTransportadoraLocal = isset($pedido['status_transportadora']) ? $pedido['status_transportadora'] : 'INDEFINIDO'; // Não usado diretamente
 
                             $mensagemStatus = '';
                             $commentTimeline = '';
@@ -98,37 +104,25 @@ class FlashCourierTrackingJob {
                                 $commentTimeline = "Flash Courier: Sem informações de rastreamento detalhadas.";
                             }
 
-                            // Sempre atualizar o Bitrix se houver informações de rastreamento
+                            // Coletar dados para atualização em lote
                             if (!empty($baixa) || !empty($historico)) {
-                                // Atualizar no banco de dados local (opcional, mas mantém a consistência)
-                                // Podemos definir um status genérico aqui se necessário, ou apenas a mensagem formatada
-                                $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'status_transportadora', $mensagemStatus); // Armazena a mensagem formatada
-                                $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'data_atualizacao_transportadora', $dataAtualizacao);
+                                // Atualizar no banco de dados local
+                                $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'status_transportadora', $mensagemStatus);
                                 LogHelper::logTrioCardGeral("Status Flash Courier para AR {$ar} (Deal ID: {$idDealBitrix}) atualizado no banco local com a mensagem: '{$mensagemStatus}'.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
 
-                                // Atualizar no Bitrix
-                                $campoStatusTransportadoraBitrix = $bitrixConfig['mapeamento_campos_jallcard']['campo_retorno_telenet']; // Campo de status existente
-                                $camposBitrix = [$campoStatusTransportadoraBitrix => $mensagemStatus];
+                                // Adicionar à lista de deals para atualização em lote no Bitrix
+                                $dealsParaAtualizar[] = [
+                                    'id' => $idDealBitrix,
+                                    'fields' => [$campoStatusTransportadoraBitrix => $mensagemStatus]
+                                ];
 
-                                LogHelper::logTrioCardGeral("Payload para BitrixDealHelper::editarDeal para Deal ID: {$idDealBitrix}: " . json_encode($camposBitrix), __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
-
-                                $resultadoUpdateBitrix = BitrixDealHelper::editarDeal($bitrixConfig['entity_type_id_deal'], $idDealBitrix, $camposBitrix);
-
-                                if ($resultadoUpdateBitrix['success']) {
-                                    LogHelper::logBitrix("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com status da transportadora: '{$mensagemStatus}'.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
-                                } else {
-                                    LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status da transportadora: " . (isset($resultadoUpdateBitrix['error']) ? $resultadoUpdateBitrix['error'] : 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
-                                }
-
-                                // Adicionar comentário na Timeline do Deal
-                                $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
-                                $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $commentTimeline, $bitrixConfig['user_id_comments']);
-
-                                if ($resultadoCommentBitrix['success']) {
-                                    LogHelper::logBitrix("Comentário de status da transportadora adicionado à timeline do Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
-                                } else {
-                                    LogHelper::logBitrix("Erro ao adicionar comentário de status da transportadora à timeline do Deal ID: {$idDealBitrix}: " . (isset($resultadoCommentBitrix['error']) ? $resultadoCommentBitrix['error'] : 'Erro desconhecido'), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
-                                }
+                                // Adicionar à lista de comentários para adição em lote na Timeline
+                                $comentariosParaAdicionar[] = [
+                                    'entityType' => $entityTypeTimeline,
+                                    'entityId' => $idDealBitrix,
+                                    'comment' => $commentTimeline,
+                                    'authorId' => $authorIdComments
+                                ];
                             } else {
                                 LogHelper::logTrioCardGeral("Nenhuma informação de rastreamento detalhada para AR {$ar} (Deal ID: {$idDealBitrix}). Nenhuma atualização no Bitrix.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
                             }
@@ -136,6 +130,30 @@ class FlashCourierTrackingJob {
                     }
                 } else {
                     LogHelper::logTrioCardGeral("Falha ao consultar rastreamento para o lote de ARs: " . implode(', ', $lote), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                }
+            }
+
+            // Executar atualizações em lote no Bitrix
+            if (!empty($dealsParaAtualizar)) {
+                LogHelper::logTrioCardGeral("Iniciando atualização em lote de " . count($dealsParaAtualizar) . " deals no Bitrix24.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                $resultadoUpdateBitrixLote = BitrixDealHelper::editarDealsEmLote($bitrixConfig['entity_type_id_deal'], $dealsParaAtualizar);
+
+                if ($resultadoUpdateBitrixLote['status'] === 'sucesso') {
+                    LogHelper::logBitrix("Atualização em lote de deals no Bitrix24 concluída: " . $resultadoUpdateBitrixLote['mensagem'], __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                } else {
+                    LogHelper::logBitrix("Erro na atualização em lote de deals no Bitrix24: " . $resultadoUpdateBitrixLote['mensagem'], __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                }
+            }
+
+            // Executar adição de comentários em lote no Bitrix
+            if (!empty($comentariosParaAdicionar)) {
+                LogHelper::logTrioCardGeral("Iniciando adição em lote de " . count($comentariosParaAdicionar) . " comentários na timeline do Bitrix24.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                $resultadoCommentBitrixLote = BitrixHelper::adicionarComentariosTimelineEmLote($comentariosParaAdicionar);
+
+                if ($resultadoCommentBitrixLote['status'] === 'sucesso') {
+                    LogHelper::logBitrix("Adição em lote de comentários na timeline do Bitrix24 concluída: " . $resultadoCommentBitrixLote['mensagem'], __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                } else {
+                    LogHelper::logBitrix("Erro na adição em lote de comentários na timeline do Bitrix24: " . $resultadoCommentBitrixLote['mensagem'], __CLASS__ . '::' . __FUNCTION__, 'ERROR');
                 }
             }
 

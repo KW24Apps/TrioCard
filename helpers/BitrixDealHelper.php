@@ -160,4 +160,103 @@ class BitrixDealHelper
         return ['result' => $resultadoFinal];
     }
 
+    /**
+     * Edita um ou vários negócios existentes no Bitrix24 via API (sempre em batch, sem agendamento).
+     *
+     * @param int $entityId O ID do tipo de entidade (ex: 191 para SPA).
+     * @param array $editData Um array de arrays, onde cada item contém 'id' (ID do deal) e 'fields' (campos a serem atualizados).
+     * @param int $tamanhoLote O número de operações por lote na API batch.
+     * @return array O resultado da operação em lote.
+     */
+    public static function editarDealsEmLote($entityId, array $editData, int $tamanhoLote = 15): array
+    {
+        if (empty($editData)) {
+            return [
+                'status' => 'sucesso',
+                'quantidade' => 0,
+                'ids' => '',
+                'mensagem' => 'Nenhum deal para editar.',
+                'tempo_total_segundos' => 0,
+                'tempo_total_minutos' => 0,
+                'media_tempo_por_deal_segundos' => 0
+            ];
+        }
+
+        $chunks = array_chunk($editData, $tamanhoLote);
+        $todosIds = [];
+        $totalSucessos = 0;
+        $totalErros = 0;
+
+        $startTime = microtime(true);
+
+        foreach ($chunks as $chunk) {
+            $batchCommands = [];
+            foreach ($chunk as $index => $editItem) {
+                if (!isset($editItem['id']) || !isset($editItem['fields']) || empty($editItem['fields'])) {
+                    // Log ou tratamento de erro para itens mal formatados no chunk
+                    continue;
+                }
+                // Formata nomes e valida/formata valores dos campos
+                $fieldsFormatados = BitrixHelper::formatarCampos($editItem['fields'], $entityId, true);
+                $params = [
+                    'entityTypeId' => $entityId,
+                    'id' => (int)$editItem['id'],
+                    'fields' => $fieldsFormatados
+                ];
+                $batchCommands["edit$index"] = 'crm.item.update?' . http_build_query($params);
+            }
+
+            if (empty($batchCommands)) {
+                continue; // Pula se o chunk não tiver comandos válidos
+            }
+
+            $resultado = BitrixHelper::chamarApi('batch', ['cmd' => $batchCommands], [
+                'log' => true // Loga a chamada batch
+            ]);
+            
+            $sucessosChunk = 0;
+            $idsChunk = [];
+            
+            if (isset($resultado['result']['result'])) {
+                foreach ($resultado['result']['result'] as $key => $res) {
+                    $chunkItemIndex = (int)str_replace('edit', '', $key);
+                    // Garante que o índice existe no chunk original
+                    if (isset($chunk[$chunkItemIndex])) {
+                        $dealId = $chunk[$chunkItemIndex]['id'];
+                        // Verifica se a operação foi bem-sucedida (Bitrix retorna 'item' ou 'result: true')
+                        if (isset($res['item']) || (isset($res['result']) && $res['result'] === true)) {
+                            $sucessosChunk++;
+                            $idsChunk[] = $dealId;
+                            $todosIds[] = $dealId;
+                        } else {
+                            LogHelper::logBitrix("ERRO ao editar Deal ID: {$dealId} no Bitrix24 via batch. Resposta: " . json_encode($res, JSON_UNESCAPED_UNICODE), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                        }
+                    }
+                }
+            } else {
+                LogHelper::logBitrix("ERRO GERAL BATCH ao editar deals. Resposta completa: " . json_encode($resultado, JSON_UNESCAPED_UNICODE), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+            }
+            $totalSucessos += $sucessosChunk;
+            $totalErros += count($chunk) - $sucessosChunk;
+        }
+
+        $endTime = microtime(true);
+        $totalTime = $endTime - $startTime;
+        $totalTimeSeconds = round($totalTime, 2);
+        $totalTimeMinutes = round($totalTime / 60, 2);
+        $mediaPorDeal = $totalSucessos > 0 ? round($totalTime / $totalSucessos, 2) : 0;
+
+        $idsString = implode(', ', $todosIds);
+        return [
+            'status' => $totalSucessos > 0 ? 'sucesso' : 'erro',
+            'quantidade' => $totalSucessos,
+            'ids' => $idsString,
+            'mensagem' => $totalSucessos > 0 
+                ? "$totalSucessos deals editados com sucesso" . ($totalErros > 0 ? " ($totalErros falharam)" : "")
+                : "Falha ao editar deals: $totalErros erros",
+            'tempo_total_segundos' => $totalTimeSeconds,
+            'tempo_total_minutos' => $totalTimeMinutes,
+            'media_tempo_por_deal_segundos' => $mediaPorDeal
+        ];
+    }
 }

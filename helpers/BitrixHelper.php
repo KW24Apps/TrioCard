@@ -258,4 +258,109 @@ class BitrixHelper
         return ['success' => true, 'result' => $resultado['result']];
     }
 
+    /**
+     * Adiciona múltiplos comentários na timeline de entidades do Bitrix24 em lote.
+     *
+     * @param array $commentsData Um array de arrays, onde cada item contém:
+     *                            'entityType' (string, ex: 'deal', 'company', 'dynamic_191'),
+     *                            'entityId' (int, o ID da entidade),
+     *                            'comment' (string, o texto do comentário),
+     *                            'authorId' (int|null, o ID do autor do comentário, opcional).
+     * @param int $tamanhoLote O número de operações por lote na API batch.
+     * @return array O resultado da operação em lote.
+     */
+    public static function adicionarComentariosTimelineEmLote(array $commentsData, int $tamanhoLote = 15): array
+    {
+        if (empty($commentsData)) {
+            return [
+                'status' => 'sucesso',
+                'quantidade' => 0,
+                'mensagem' => 'Nenhum comentário para adicionar.',
+                'tempo_total_segundos' => 0,
+                'tempo_total_minutos' => 0,
+                'media_tempo_por_comentario_segundos' => 0
+            ];
+        }
+
+        $chunks = array_chunk($commentsData, $tamanhoLote);
+        $totalSucessos = 0;
+        $totalErros = 0;
+
+        $startTime = microtime(true);
+
+        foreach ($chunks as $chunk) {
+            $batchCommands = [];
+            foreach ($chunk as $index => $commentItem) {
+                if (!isset($commentItem['entityType']) || !isset($commentItem['entityId']) || !isset($commentItem['comment'])) {
+                    // Log ou tratamento de erro para itens mal formatados no chunk
+                    continue;
+                }
+
+                $authorId = $commentItem['authorId'] ?? null;
+                if (!$authorId) {
+                    self::init();
+                    $bitrixConfig = self::$config['bitrix'];
+                    $authorId = $bitrixConfig['user_id_comments'] ?? null;
+                }
+
+                $params = [
+                    'fields' => [
+                        'ENTITY_ID' => (int)$commentItem['entityId'],
+                        'ENTITY_TYPE' => $commentItem['entityType'],
+                        'COMMENT' => $commentItem['comment']
+                    ]
+                ];
+
+                if ($authorId) {
+                    $params['fields']['AUTHOR_ID'] = (int)$authorId;
+                }
+                $batchCommands["comment$index"] = 'crm.timeline.comment.add?' . http_build_query($params);
+            }
+
+            if (empty($batchCommands)) {
+                continue; // Pula se o chunk não tiver comandos válidos
+            }
+
+            $resultado = self::chamarApi('batch', ['cmd' => $batchCommands], [
+                'log' => true // Loga a chamada batch
+            ]);
+
+            $sucessosChunk = 0;
+            if (isset($resultado['result']['result'])) {
+                foreach ($resultado['result']['result'] as $key => $res) {
+                    if (isset($res['result']) && !empty($res['result'])) { // Bitrix retorna o ID do comentário em caso de sucesso
+                        $sucessosChunk++;
+                    } else {
+                        $chunkItemIndex = (int)str_replace('comment', '', $key);
+                        if (isset($chunk[$chunkItemIndex])) {
+                            $entityId = $chunk[$chunkItemIndex]['entityId'];
+                            $entityType = $chunk[$chunkItemIndex]['entityType'];
+                            LogHelper::logBitrix("ERRO ao adicionar comentário na timeline para EntityID: {$entityId}, EntityType: {$entityType} via batch. Resposta: " . json_encode($res, JSON_UNESCAPED_UNICODE), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+                        }
+                    }
+                }
+            } else {
+                LogHelper::logBitrix("ERRO GERAL BATCH ao adicionar comentários na timeline. Resposta completa: " . json_encode($resultado, JSON_UNESCAPED_UNICODE), __CLASS__ . '::' . __FUNCTION__, 'ERROR');
+            }
+            $totalSucessos += $sucessosChunk;
+            $totalErros += count($chunk) - $sucessosChunk;
+        }
+
+        $endTime = microtime(true);
+        $totalTime = $endTime - $startTime;
+        $totalTimeSeconds = round($totalTime, 2);
+        $totalTimeMinutes = round($totalTime / 60, 2);
+        $mediaPorComentario = $totalSucessos > 0 ? round($totalTime / $totalSucessos, 2) : 0;
+
+        return [
+            'status' => $totalSucessos > 0 ? 'sucesso' : 'erro',
+            'quantidade' => $totalSucessos,
+            'mensagem' => $totalSucessos > 0 
+                ? "$totalSucessos comentários adicionados com sucesso" . ($totalErros > 0 ? " ($totalErros falharam)" : "")
+                : "Falha ao adicionar comentários: $totalErros erros",
+            'tempo_total_segundos' => $totalTimeSeconds,
+            'tempo_total_minutos' => $totalTimeMinutes,
+            'media_tempo_por_comentario_segundos' => $mediaPorComentario
+        ];
+    }
 }
