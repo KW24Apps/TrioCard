@@ -97,16 +97,22 @@ try {
                     $novoStatusParaDB = $ordemProducao['status'] ?? 'INDEFINIDO';
                 }
 
+                LogHelper::logJallCard("DEBUG: OP {$opJallCard}, Status determinado: {$novoStatusParaDB}", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+
                 // Buscar dados da transportadora e ID de rastreamento SOMENTE se o status for Expedição ou FINALIZADA
                 if (in_array($novoStatusParaDB, ['EXPEDICAO', 'FINALIZADA'])) {
+                    LogHelper::logJallCard("DEBUG: Status é Expedição ou Finalizada. Consultando documentos para OP {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
                     $documentos = JallCardHelper::getDocumentosByOp($opJallCard, true);
                     if (!empty($documentos) && isset($documentos[0])) {
                         $doc = $documentos[0];
                         $transportadora = $doc['entregadora'] ?? null;
                         $idRastreamento = $doc['codigoPostagem'] ?? null;
+                        LogHelper::logJallCard("DEBUG: Documentos encontrados. Transportadora: {$transportadora}, ID Rastreamento: {$idRastreamento}", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
                     } else {
                         LogHelper::logJallCard("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora (Status: {$novoStatusParaDB}).", 'JallCardStatusUpdateJob::executar', 'WARNING');
                     }
+                } else {
+                    LogHelper::logJallCard("DEBUG: Status não é Expedição nem Finalizada ({$novoStatusParaDB}). Não consultando documentos para OP {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
                 }
 
                 // Definir mensagem de status e comentário da timeline após a possível busca de rastreamento
