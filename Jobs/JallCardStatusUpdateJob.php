@@ -53,21 +53,27 @@ try {
 
     // 2. Para cada pedido vinculado, consultar o status na JallCard e atualizar o banco local e o Bitrix
     foreach ($pedidosVinculados as $pedido) {
+        echo "DEBUG: Entrando no loop foreach para Deal ID: {$pedido['id_deal_bitrix']}\n";
+        LogHelper::logJallCard("DEBUG: Entrando no loop foreach para Deal ID: {$pedido['id_deal_bitrix']}", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+
         $opJallCard = $pedido['op_jallcard'];
         $idDealBitrix = $pedido['id_deal_bitrix'];
-            $statusAtualLocal = $pedido['status_jallcard'] ?? 'INDEFINIDO'; // Status atual no banco local
+        $statusAtualLocal = $pedido['status_jallcard'] ?? 'INDEFINIDO'; // Status atual no banco local
 
-            if (empty($opJallCard)) {
-                LogHelper::logTrioCardGeral("OP JallCard vazia para Deal ID: {$idDealBitrix}. Ignorando atualização de status.", 'JallCardStatusUpdateJob::executar', 'WARNING');
-                continue;
-            }
+        if (empty($opJallCard)) {
+            LogHelper::logTrioCardGeral("OP JallCard vazia para Deal ID: {$idDealBitrix}. Ignorando atualização de status.", 'JallCardStatusUpdateJob::executar', 'WARNING');
+            echo "DEBUG: OP JallCard vazia para Deal ID: {$idDealBitrix}. Ignorando.\n";
+            continue;
+        }
 
-            $ordemProducao = JallCardHelper::getOrdemProducao($opJallCard);
+        echo "DEBUG: Chamando JallCardHelper::getOrdemProducao para OP: {$opJallCard}\n";
+        $ordemProducao = JallCardHelper::getOrdemProducao($opJallCard);
+        echo "DEBUG: Retorno de JallCardHelper::getOrdemProducao: " . json_encode($ordemProducao) . "\n";
 
-            if ($ordemProducao && isset($ordemProducao['producao'])) {
-                $dataGravacao = $ordemProducao['producao']['gravacao'] ?? null;
-                $dataPreExpedicao = $ordemProducao['producao']['preExpedicao'] ?? null;
-                $dataExpedicao = $ordemProducao['producao']['expedicao'] ?? null;
+        if ($ordemProducao && isset($ordemProducao['producao'])) {
+            $dataGravacao = $ordemProducao['producao']['gravacao'] ?? null;
+            $dataPreExpedicao = $ordemProducao['producao']['preExpedicao'] ?? null;
+            $dataExpedicao = $ordemProducao['producao']['expedicao'] ?? null;
 
                 $statusDetalhado = '';
                 $dataStatus = '';
@@ -205,10 +211,12 @@ try {
     exit("JallCardStatusUpdateJob finalizado com sucesso.\n");
 
 } catch (PDOException $e) {
-    LogHelper::logTrioCardGeral("Erro de banco de dados no JallCardStatusUpdateJob: " . $e->getMessage(), 'JallCardStatusUpdateJob::executar', 'CRITICAL');
+    LogHelper::logTrioCardGeral("Erro de banco de dados no JallCardStatusUpdateJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'CRITICAL');
+    echo "ERRO CRÍTICO (PDO): " . $e->getMessage() . "\n"; // Adicionado echo para erros críticos
     exit("Erro de banco de dados: " . $e->getMessage() . "\n");
 } catch (Exception $e) {
-    LogHelper::logTrioCardGeral("Erro geral no JallCardStatusUpdateJob: " . $e->getMessage(), 'JallCardStatusUpdateJob::executar', 'CRITICAL');
+    LogHelper::logTrioCardGeral("Erro geral no JallCardStatusUpdateJob: " . $e->getMessage(), __CLASS__ . '::' . __FUNCTION__, 'CRITICAL');
+    echo "ERRO CRÍTICO (GERAL): " . $e->getMessage() . "\n"; // Adicionado echo para erros críticos
     exit("Erro geral: " . $e->getMessage() . "\n");
 }
 } // Fecha o método executar
