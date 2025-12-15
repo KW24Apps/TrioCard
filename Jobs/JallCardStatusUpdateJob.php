@@ -71,143 +71,143 @@ try {
         echo "DEBUG: Retorno de JallCardHelper::getOrdemProducao: " . json_encode($ordemProducao) . "\n";
 
         if ($ordemProducao && isset($ordemProducao['producao'])) {
+            echo "DEBUG: Entrou no bloco 'if (ordemProducao && producao)' para OP: {$opJallCard}\n";
             $dataGravacao = $ordemProducao['producao']['gravacao'] ?? null;
             $dataPreExpedicao = $ordemProducao['producao']['preExpedicao'] ?? null;
             $dataExpedicao = $ordemProducao['producao']['expedicao'] ?? null;
 
-                $statusDetalhado = '';
-                $dataStatus = '';
-                $mensagemStatus = '';
-                $commentTimeline = '';
-                $novoStatusParaDB = ''; // O status que será salvo no DB
+            $statusDetalhado = '';
+            $dataStatus = '';
+            $mensagemStatus = '';
+            $commentTimeline = '';
+            $novoStatusParaDB = ''; // O status que será salvo no DB
 
-                $idRastreamento = null;
-                $transportadora = null;
+            $idRastreamento = null;
+            $transportadora = null;
 
-                // Determinar o status mais recente e sua data com base na prioridade
-                if (!empty($dataExpedicao)) {
-                    $statusDetalhado = 'Expedição';
-                    $dataStatus = (new DateTime($dataExpedicao))->format('d/m/Y H:i:s');
-                    $novoStatusParaDB = 'EXPEDICAO';
-                } elseif (!empty($dataPreExpedicao)) {
-                    $statusDetalhado = 'Pré-Expedição';
-                    $dataStatus = (new DateTime($dataPreExpedicao))->format('d/m/Y H:i:s');
-                    $novoStatusParaDB = 'PRE_EXPEDICAO';
-                } elseif (!empty($dataGravacao)) {
-                    $statusDetalhado = 'Gravação';
-                    $dataStatus = (new DateTime($dataGravacao))->format('d/m/Y H:i:s');
-                    $novoStatusParaDB = 'GRAVACAO';
+            // Determinar o status mais recente e sua data com base na prioridade
+            if (!empty($dataExpedicao)) {
+                $statusDetalhado = 'Expedição';
+                $dataStatus = (new DateTime($dataExpedicao))->format('d/m/Y H:i:s');
+                $novoStatusParaDB = 'EXPEDICAO';
+            } elseif (!empty($dataPreExpedicao)) {
+                $statusDetalhado = 'Pré-Expedição';
+                $dataStatus = (new DateTime($dataPreExpedicao))->format('d/m/Y H:i:s');
+                $novoStatusParaDB = 'PRE_EXPEDICAO';
+            } elseif (!empty($dataGravacao)) {
+                $statusDetalhado = 'Gravação';
+                $dataStatus = (new DateTime($dataGravacao))->format('d/m/Y H:i:s');
+                $novoStatusParaDB = 'GRAVACAO';
+            } else {
+                // Se nenhuma das datas de produção estiver preenchida, usar o status geral da JallCard
+                $statusDetalhado = $ordemProducao['status'] ?? 'INDEFINIDO';
+                $novoStatusParaDB = $ordemProducao['status'] ?? 'INDEFINIDO';
+            }
+
+            LogHelper::logJallCard("DEBUG: OP {$opJallCard}, Status determinado: {$novoStatusParaDB}", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+
+            // Buscar dados da transportadora e ID de rastreamento SOMENTE se o status for Expedição ou FINALIZADA
+            if (in_array($novoStatusParaDB, ['EXPEDICAO', 'FINALIZADA'])) {
+                LogHelper::logJallCard("DEBUG: Status é Expedição ou Finalizada. Consultando documentos para OP {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+                $documentos = JallCardHelper::getDocumentosByOp($opJallCard, true);
+                if (!empty($documentos) && isset($documentos[0])) {
+                    $doc = $documentos[0];
+                    $transportadora = $doc['entregadora'] ?? null;
+                    $idRastreamento = $doc['codigoPostagem'] ?? null;
+                    LogHelper::logJallCard("DEBUG: Documentos encontrados. Transportadora: {$transportadora}, ID Rastreamento: {$idRastreamento}", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
                 } else {
-                    // Se nenhuma das datas de produção estiver preenchida, usar o status geral da JallCard
-                    $statusDetalhado = $ordemProducao['status'] ?? 'INDEFINIDO';
-                    $novoStatusParaDB = $ordemProducao['status'] ?? 'INDEFINIDO';
-                }
-
-                LogHelper::logJallCard("DEBUG: OP {$opJallCard}, Status determinado: {$novoStatusParaDB}", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
-
-                // Buscar dados da transportadora e ID de rastreamento SOMENTE se o status for Expedição ou FINALIZADA
-                if (in_array($novoStatusParaDB, ['EXPEDICAO', 'FINALIZADA'])) {
-                    LogHelper::logJallCard("DEBUG: Status é Expedição ou Finalizada. Consultando documentos para OP {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
-                    $documentos = JallCardHelper::getDocumentosByOp($opJallCard, true);
-                    if (!empty($documentos) && isset($documentos[0])) {
-                        $doc = $documentos[0];
-                        $transportadora = $doc['entregadora'] ?? null;
-                        $idRastreamento = $doc['codigoPostagem'] ?? null;
-                        LogHelper::logJallCard("DEBUG: Documentos encontrados. Transportadora: {$transportadora}, ID Rastreamento: {$idRastreamento}", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
-                    } else {
-                        LogHelper::logJallCard("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora (Status: {$novoStatusParaDB}).", 'JallCardStatusUpdateJob::executar', 'WARNING');
-                    }
-                } else {
-                    LogHelper::logJallCard("DEBUG: Status não é Expedição nem Finalizada ({$novoStatusParaDB}). Não consultando documentos para OP {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
-                }
-
-                // Definir mensagem de status e comentário da timeline após a possível busca de rastreamento
-                $mensagemStatus = '';
-                $commentTimeline = '';
-
-                if ($novoStatusParaDB === 'EXPEDICAO') {
-                    if ($transportadora && $idRastreamento) {
-                        $mensagemStatus = "JallCard: Recolhido pela transportadora";
-                        $commentTimeline = "JallCard: Status finalizado: {$transportadora} - {$idRastreamento}.\nData: {$dataStatus}";
-                    } else {
-                        $mensagemStatus = "JallCard: Aguardando recolhimento da transportadora";
-                        $commentTimeline = "JallCard: Status atualizado para 'Expedição'.\nData: {$dataStatus}";
-                    }
-                } elseif ($novoStatusParaDB === 'PRE_EXPEDICAO') {
-                    $mensagemStatus = "JallCard: Aguardando recolhimento da transportadora";
-                    $commentTimeline = "JallCard: Aguardando recolhimento da transportadora.\nData: {$dataStatus}";
-                } elseif ($novoStatusParaDB === 'GRAVACAO') {
-                    $mensagemStatus = "JallCard: Cartões enviados para gravação";
-                    $commentTimeline = "JallCard: Cartões enviados para gravação.\nData: {$dataStatus}";
-                } else {
-                    $mensagemStatus = "JallCard: Status atualizado para '{$statusDetalhado}'";
-                    $commentTimeline = "JallCard: Status atualizado para '{$statusDetalhado}'.";
-                }
-
-                // Verificar se o status determinado (novoStatusParaDB) é diferente do status atual local
-                // E se o novo status é um "avanço" em relação ao status atual local
-                $statusOrder = ['INDEFINIDO' => 0, 'ABERTA' => 1, 'GRAVACAO' => 2, 'PRE_EXPEDICAO' => 3, 'EXPEDICAO' => 4, 'FINALIZADA' => 5, 'CANCELADA' => 6];
-
-                $currentStatusOrder = $statusOrder[$statusAtualLocal] ?? 0;
-                $newStatusOrder = $statusOrder[$novoStatusParaDB] ?? 0;
-
-                if ($novoStatusParaDB !== $statusAtualLocal && $newStatusOrder > $currentStatusOrder) {
-                    // Atualizar status no banco de dados local
-                    $databaseRepository->atualizarStatusJallCard($opJallCard, $novoStatusParaDB);
-                    LogHelper::logTrioCardGeral("Status JallCard para OP {$opJallCard} atualizado para '{$novoStatusParaDB}' no banco local (anterior: '{$statusAtualLocal}').", 'JallCardStatusUpdateJob::executar', 'INFO');
-
-                    // Atualizar status no Bitrix (campo retorno)
-                    $campoRetornoBitrix = $bitrixConfig['mapeamento_campos_jallcard']['campo_retorno_telenet'];
-                    $camposBitrix = [$campoRetornoBitrix => $mensagemStatus];
-
-                    // Adicionar campos de rastreamento e transportadora se encontrados
-                    $campoNomeTransportadoraBitrix = $bitrixConfig['mapeamento_campos_jallcard']['nome_transportadora'];
-                    $campoIdRastreamentoBitrix = $bitrixConfig['mapeamento_campos_jallcard']['id_rastreamento'];
-
-                    if ($transportadora && !empty($campoNomeTransportadoraBitrix)) {
-                        $camposBitrix[$campoNomeTransportadoraBitrix] = $transportadora;
-                        LogHelper::logBitrix("Adicionando Nome da Transportadora '{$transportadora}' ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar', 'INFO');
-                    }
-                    if ($idRastreamento && !empty($campoIdRastreamentoBitrix)) {
-                        $camposBitrix[$campoIdRastreamentoBitrix] = $idRastreamento;
-                        LogHelper::logBitrix("Adicionando ID de rastreamento '{$idRastreamento}' ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar', 'INFO');
-                    }
-
-                    $resultadoUpdateBitrix = BitrixDealHelper::editarDeal($bitrixConfig['entity_type_id_deal'], $idDealBitrix, $camposBitrix);
-
-                    if ($resultadoUpdateBitrix['success']) {
-                        LogHelper::logBitrix("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com mensagem de status e/ou rastreamento: '{$mensagemStatus}'.", 'JallCardStatusUpdateJob::executar', 'INFO');
-                    } else {
-                        LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), 'JallCardStatusUpdateJob::executar', 'ERROR');
-                    }
-
-                    // Salvar id_rastreamento no banco de dados local (pedidos_integracao)
-                    // Verifica se o idRastreamento foi obtido e se é diferente do que já está no banco (ou se o campo no banco está vazio/nulo)
-                    $idRastreamentoNoBanco = $pedido['id_rastreio_transportador'] ?? null;
-                    if ($idRastreamento && ($idRastreamentoNoBanco === null || $idRastreamentoNoBanco === '' || $idRastreamentoNoBanco !== $idRastreamento)) {
-                        $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'id_rastreio_transportador', $idRastreamento);
-                        LogHelper::logTrioCardGeral("ID de rastreamento '{$idRastreamento}' salvo/atualizado no banco local para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
-                    }
-                    // O campo 'transportadora_rastreio' não será salvo conforme decisão anterior.
-
-                    // Adicionar comentário na Timeline do Deal
-                    $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
-                    $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $commentTimeline, $bitrixConfig['user_id_comments']);
-
-                    if ($resultadoCommentBitrix['success']) {
-                        LogHelper::logBitrix("Comentário de status adicionado à timeline do Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar', 'INFO');
-                    } else {
-                        LogHelper::logBitrix("Erro ao adicionar comentário de status à timeline do Deal ID: {$idDealBitrix}: " . ($resultadoCommentBitrix['error'] ?? 'Erro desconhecido'), 'JallCardStatusUpdateJob::executar', 'ERROR');
-                    }
-                } else {
-                    LogHelper::logTrioCardGeral("Status JallCard para OP {$opJallCard} não avançou ou não mudou (API: '{$novoStatusParaDB}', Local: '{$statusAtualLocal}'). Nenhuma atualização no Bitrix.", 'JallCardStatusUpdateJob::executar', 'DEBUG');
+                    LogHelper::logJallCard("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora (Status: {$novoStatusParaDB}).", 'JallCardStatusUpdateJob::executar', 'WARNING');
                 }
             } else {
-                LogHelper::logJallCard("Não foi possível obter dados de produção ou a resposta da API JallCard está incompleta para OP: {$opJallCard}.", 'JallCardStatusUpdateJob::executar', 'ERROR');
+                LogHelper::logJallCard("DEBUG: Status não é Expedição nem Finalizada ({$novoStatusParaDB}). Não consultando documentos para OP {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+            }
+
+            // Definir mensagem de status e comentário da timeline após a possível busca de rastreamento
+            $mensagemStatus = '';
+            $commentTimeline = '';
+
+            if ($novoStatusParaDB === 'EXPEDICAO') {
+                if ($transportadora && $idRastreamento) {
+                    $mensagemStatus = "JallCard: Recolhido pela transportadora";
+                    $commentTimeline = "JallCard: Status finalizado: {$transportadora} - {$idRastreamento}.\nData: {$dataStatus}";
+                } else {
+                    $mensagemStatus = "JallCard: Aguardando recolhimento da transportadora";
+                    $commentTimeline = "JallCard: Status atualizado para 'Expedição'.\nData: {$dataStatus}";
+                }
+            } elseif ($novoStatusParaDB === 'PRE_EXPEDICAO') {
+                $mensagemStatus = "JallCard: Aguardando recolhimento da transportadora";
+                $commentTimeline = "JallCard: Aguardando recolhimento da transportadora.\nData: {$dataStatus}";
+            } elseif ($novoStatusParaDB === 'GRAVACAO') {
+                $mensagemStatus = "JallCard: Cartões enviados para gravação";
+                $commentTimeline = "JallCard: Cartões enviados para gravação.\nData: {$dataStatus}";
+            } else {
+                $mensagemStatus = "JallCard: Status atualizado para '{$statusDetalhado}'";
+                $commentTimeline = "JallCard: Status atualizado para '{$statusDetalhado}'.";
+            }
+
+            // Verificar se o status determinado (novoStatusParaDB) é diferente do status atual local
+            // E se o novo status é um "avanço" em relação ao status atual local
+            $statusOrder = ['INDEFINIDO' => 0, 'ABERTA' => 1, 'GRAVACAO' => 2, 'PRE_EXPEDICAO' => 3, 'EXPEDICAO' => 4, 'FINALIZADA' => 5, 'CANCELADA' => 6];
+
+            $currentStatusOrder = $statusOrder[$statusAtualLocal] ?? 0;
+            $newStatusOrder = $statusOrder[$novoStatusParaDB] ?? 0;
+
+            if ($novoStatusParaDB !== $statusAtualLocal && $newStatusOrder > $currentStatusOrder) {
+                // Atualizar status no banco de dados local
+                $databaseRepository->atualizarStatusJallCard($opJallCard, $novoStatusParaDB);
+                LogHelper::logTrioCardGeral("Status JallCard para OP {$opJallCard} atualizado para '{$novoStatusParaDB}' no banco local (anterior: '{$statusAtualLocal}').", 'JallCardStatusUpdateJob::executar', 'INFO');
+
+                // Atualizar status no Bitrix (campo retorno)
+                $campoRetornoBitrix = $bitrixConfig['mapeamento_campos_jallcard']['campo_retorno_telenet'];
+                $camposBitrix = [$campoRetornoBitrix => $mensagemStatus];
+
+                // Adicionar campos de rastreamento e transportadora se encontrados
+                $campoNomeTransportadoraBitrix = $bitrixConfig['mapeamento_campos_jallcard']['nome_transportadora'];
+                $campoIdRastreamentoBitrix = $bitrixConfig['mapeamento_campos_jallcard']['id_rastreamento'];
+
+                if ($transportadora && !empty($campoNomeTransportadoraBitrix)) {
+                    $camposBitrix[$campoNomeTransportadoraBitrix] = $transportadora;
+                    LogHelper::logBitrix("Adicionando Nome da Transportadora '{$transportadora}' ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar', 'INFO');
+                }
+                if ($idRastreamento && !empty($campoIdRastreamentoBitrix)) {
+                    $camposBitrix[$campoIdRastreamentoBitrix] = $idRastreamento;
+                    LogHelper::logBitrix("Adicionando ID de rastreamento '{$idRastreamento}' ao Bitrix para Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar', 'INFO');
+                }
+
+                $resultadoUpdateBitrix = BitrixDealHelper::editarDeal($bitrixConfig['entity_type_id_deal'], $idDealBitrix, $camposBitrix);
+
+                if ($resultadoUpdateBitrix['success']) {
+                    LogHelper::logBitrix("Deal ID: {$idDealBitrix} atualizado no Bitrix24 com mensagem de status e/ou rastreamento: '{$mensagemStatus}'.", 'JallCardStatusUpdateJob::executar', 'INFO');
+                } else {
+                    LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), 'JallCardStatusUpdateJob::executar', 'ERROR');
+                }
+
+                // Salvar id_rastreamento no banco de dados local (pedidos_integracao)
+                // Verifica se o idRastreamento foi obtido e se é diferente do que já está no banco (ou se o campo no banco está vazio/nulo)
+                $idRastreamentoNoBanco = $pedido['id_rastreio_transportador'] ?? null;
+                if ($idRastreamento && ($idRastreamentoNoBanco === null || $idRastreamentoNoBanco === '' || $idRastreamentoNoBanco !== $idRastreamento)) {
+                    $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'id_rastreio_transportador', $idRastreamento);
+                    LogHelper::logTrioCardGeral("ID de rastreamento '{$idRastreamento}' salvo/atualizado no banco local para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                }
+                // O campo 'transportadora_rastreio' não será salvo conforme decisão anterior.
+
+                // Adicionar comentário na Timeline do Deal
+                $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
+                $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $commentTimeline, $bitrixConfig['user_id_comments']);
+
+                if ($resultadoCommentBitrix['success']) {
+                    LogHelper::logBitrix("Comentário de status adicionado à timeline do Deal ID: {$idDealBitrix}.", 'JallCardStatusUpdateJob::executar', 'INFO');
+                } else {
+                    LogHelper::logBitrix("Erro ao adicionar comentário de status à timeline do Deal ID: {$idDealBitrix}: " . ($resultadoCommentBitrix['error'] ?? 'Erro desconhecido'), 'JallCardStatusUpdateJob::executar', 'ERROR');
+                }
+            } else {
+                LogHelper::logTrioCardGeral("Status JallCard para OP {$opJallCard} não avançou ou não mudou (API: '{$novoStatusParaDB}', Local: '{$statusAtualLocal}'). Nenhuma atualização no Bitrix.", 'JallCardStatusUpdateJob::executar', 'DEBUG');
             }
         }
+        echo "DEBUG: Saindo do loop foreach para Deal ID: {$pedido['id_deal_bitrix']}\n";
+    } // Fim do foreach
 
-    // LogHelper::logTrioCardGeral("JallCardStatusUpdateJob finalizado.", 'JallCardStatusUpdateJob::executar', 'INFO'); // Removido: log positivo não essencial
+    LogHelper::logTrioCardGeral("JallCardStatusUpdateJob finalizado.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
     exit("JallCardStatusUpdateJob finalizado com sucesso.\n");
 
 } catch (PDOException $e) {
