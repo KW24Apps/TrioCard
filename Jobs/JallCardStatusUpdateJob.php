@@ -40,15 +40,14 @@ class JallCardStatusUpdateJob {
 try {
     $databaseRepository = new DatabaseRepository();
 
-    // LogHelper::logTrioCardGeral("Iniciando JallCardStatusUpdateJob: Atualização de status de pedidos vinculados.", 'JallCardStatusUpdateJob::executar', 'INFO'); // Removido: log positivo não essencial
+    LogHelper::logTrioCardGeral("Iniciando JallCardStatusUpdateJob: Atualização de status de pedidos vinculados.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
 
     // 1. Obter todos os pedidos vinculados da tabela principal
-    // (Opcional: filtrar por status_jallcard diferente de 'FINALIZADA' ou 'CANCELADA' para otimizar)
-    $pedidosVinculados = $databaseRepository->getPedidosVinculados(); // Este método precisa ser adicionado ao DatabaseRepository
-    // LogHelper::logTrioCardGeral("Pedidos vinculados encontrados para atualização de status: " . count($pedidosVinculados) . " itens.", 'JallCardStatusUpdateJob::executar', 'DEBUG'); // Removido: log positivo não essencial
+    $pedidosVinculados = $databaseRepository->getPedidosVinculados();
+    LogHelper::logTrioCardGeral("Pedidos vinculados encontrados para atualização de status: " . count($pedidosVinculados) . " itens.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
 
     if (empty($pedidosVinculados)) {
-        LogHelper::logTrioCardGeral("Nenhum pedido vinculado encontrado para atualização de status.", 'JallCardStatusUpdateJob::executar', 'INFO');
+        LogHelper::logTrioCardGeral("Nenhum pedido vinculado encontrado para atualização de status.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
         exit("Nenhum pedido vinculado encontrado para atualização de status.\n");
     }
 
