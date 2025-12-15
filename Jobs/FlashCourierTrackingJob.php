@@ -1,4 +1,4 @@
-Você alterou alguma regra no Database? Alguma coisa que possa fazer com que o geocard status não funcione mais?<?php
+<?php
 date_default_timezone_set('America/Sao_Paulo');
 
 // Define nome da aplicação para logs
