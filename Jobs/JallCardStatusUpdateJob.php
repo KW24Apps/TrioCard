@@ -156,15 +156,13 @@ try {
                     }
 
                     // Salvar id_rastreamento no banco de dados local (pedidos_integracao)
-                    if ($idRastreamento && $pedido['id_rastreio_transportador'] !== $idRastreamento) {
+                    // Verifica se o idRastreamento foi obtido e se é diferente do que já está no banco (ou se o campo no banco está vazio/nulo)
+                    $idRastreamentoNoBanco = $pedido['id_rastreio_transportador'] ?? null;
+                    if ($idRastreamento && ($idRastreamentoNoBanco === null || $idRastreamentoNoBanco === '' || $idRastreamentoNoBanco !== $idRastreamento)) {
                         $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'id_rastreio_transportador', $idRastreamento);
-                        LogHelper::logTrioCardGeral("ID de rastreamento '{$idRastreamento}' salvo no banco local para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                        LogHelper::logTrioCardGeral("ID de rastreamento '{$idRastreamento}' salvo/atualizado no banco local para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
                     }
-                    // Salvar nome da transportadora no banco de dados local (pedidos_integracao)
-                    // O campo 'transportadora_rastreio' foi removido da discussão, mas se for necessário no futuro,
-                    // a lógica seria similar: $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'transportadora_rastreio', $transportadora);
-
-                    // Adicionar comentário na Timeline do Deal
+                    // O campo 'transportadora_rastreio' não será salvo conforme decisão anterior.
 
                     // Adicionar comentário na Timeline do Deal
                     $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
