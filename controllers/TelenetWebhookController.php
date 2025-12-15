@@ -148,6 +148,30 @@ class TelenetWebhookController {
 
             $protocolo = $dados['protocolo'];
             $mensagem = $dados['mensagem'] ?? '';
+            $operadora = $dados['operadora'] ?? '';
+
+            // 3. Lógica de validação da operadora
+            $operadoraNormalizada = trim(mb_strtoupper($operadora, 'UTF-8'));
+            if ($operadoraNormalizada === 'PERSONAL') {
+                LogHelper::logTrioCardGeral("Operadora 'PERSONAL' detectada para protocolo '$protocolo'. Ignorando processamento.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+                http_response_code(200); // Retorna sucesso para a Telenet, mas não processa
+                echo json_encode([
+                    'success' => true,
+                    'message' => "Operadora 'PERSONAL' ignorada.",
+                    'protocolo' => $protocolo,
+                    'acao' => 'ignorado',
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]);
+                return;
+            } elseif ($operadoraNormalizada !== 'TRIO CARD') {
+                LogHelper::logTrioCardGeral("Operadora '$operadora' não reconhecida para protocolo '$protocolo'.", __CLASS__ . '::' . __FUNCTION__, 'WARNING');
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error' => "Operadora '$operadora' não reconhecida. Valores aceitos: TRIO CARD ou PERSONAL (ignorada)."
+                ]);
+                return;
+            }
             
             // Lógica de Negócio baseada na Mensagem
             if ($mensagem === 'Arquivo gerado') {
@@ -190,17 +214,23 @@ class TelenetWebhookController {
         }
     }
     
-    // Atualizar apenas: nome_arquivo, data_retorno_solicitacao e mensagem
+    // Atualizar apenas: nome_arquivo, data_retorno_solicitacao, mensagem e quant_registros
     private function atualizarDeal($dealExistente, $dados, $protocolo) {
         $bitrixConfig = self::$config['bitrix'];
         
         $camposParaAtualizar = [];
-        $camposAtualizacao = ['nome_arquivo', 'data_retorno_solicitacao', 'mensagem'];
+        $camposAtualizacao = ['nome_arquivo', 'data_retorno_solicitacao', 'mensagem', 'quant_registros']; // Adicionado quant_registros
         
         foreach ($camposAtualizacao as $campo) {
             $ufBitrix = $bitrixConfig['mapeamento_campos_telenet'][$campo];
-            if (isset($dados[$campo]) && $dados[$campo] !== '' && $ufBitrix !== '') {
-                $camposParaAtualizar[$ufBitrix] = $dados[$campo];
+            // Verifica se o campo existe nos dados e se o mapeamento Bitrix não está vazio
+            if (isset($dados[$campo]) && $ufBitrix !== '') {
+                // Se for 'quant_registros' e vier vazio, salva 0. Caso contrário, salva o valor.
+                if ($campo === 'quant_registros' && (empty($dados[$campo]) || !is_numeric($dados[$campo]))) {
+                    $camposParaAtualizar[$ufBitrix] = 0;
+                } else {
+                    $camposParaAtualizar[$ufBitrix] = $dados[$campo];
+                }
             }
         }
         
@@ -249,8 +279,18 @@ class TelenetWebhookController {
         $bitrixConfig = self::$config['bitrix'];
         $camposParaCriar = [];
         foreach ($bitrixConfig['mapeamento_campos_telenet'] as $campoJson => $ufBitrix) {
-            if ($campoJson !== 'data_retorno_solicitacao' && isset($dados[$campoJson]) && $dados[$campoJson] !== '' && $ufBitrix !== '') {
-                $camposParaCriar[$ufBitrix] = $dados[$campoJson];
+            // Ignora 'data_retorno_solicitacao' e 'operadora'
+            if ($campoJson === 'data_retorno_solicitacao' || $campoJson === 'operadora') {
+                continue;
+            }
+
+            if (isset($dados[$campoJson]) && $ufBitrix !== '') {
+                // Se for 'quant_registros' e vier vazio, salva 0. Caso contrário, salva o valor.
+                if ($campoJson === 'quant_registros' && (empty($dados[$campoJson]) || !is_numeric($dados[$campoJson]))) {
+                    $camposParaCriar[$ufBitrix] = 0;
+                } else {
+                    $camposParaCriar[$ufBitrix] = $dados[$campoJson];
+                }
             }
         }
         
@@ -285,7 +325,8 @@ class TelenetWebhookController {
             'nome_cliente_telenet' => $dados['cliente'] ?? null,
             'cnpj_cliente_telenet' => $dados['cnpj'] ?? null,
             'id_deal_bitrix' => $newDealId,
-            'vinculacao_jallcard' => 'PENDENTE' // Status inicial
+            'vinculacao_jallcard' => 'PENDENTE', // Status inicial
+            'quant_registros_telenet' => (isset($dados['quant_registros']) && is_numeric($dados['quant_registros'])) ? (int)$dados['quant_registros'] : 0 // Salva quant_registros
         ];
 
         try {

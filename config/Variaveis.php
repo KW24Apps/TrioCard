@@ -20,7 +20,7 @@ return [
             'data_solicitacao' => 'ufCrm8_1756758589',
             'data_retorno_solicitacao' => 'ufCrm8_1756758616',
             'codigo_cliente' => '',
-            'quant_registros' => '',
+            'quant_registros' => 'ufCrm8_1765818111',
             'cnpj_consulta_empresa' => 'ufcrm_1641693445101'
         ],
         'mapeamento_campos_jallcard' => [
