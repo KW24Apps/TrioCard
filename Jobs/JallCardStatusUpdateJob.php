@@ -76,21 +76,42 @@ try {
                 $idRastreamento = null;
                 $transportadora = null;
 
-                // Buscar dados da transportadora e ID de rastreamento
-                $documentos = JallCardHelper::getDocumentosByOp($opJallCard, true);
-                if (!empty($documentos) && isset($documentos[0])) {
-                    $doc = $documentos[0];
-                    $transportadora = $doc['entregadora'] ?? null;
-                    $idRastreamento = $doc['codigoPostagem'] ?? null;
-                } else {
-                    LogHelper::logJallCard("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora.", 'JallCardStatusUpdateJob::executar', 'WARNING');
-                }
-
                 // Determinar o status mais recente e sua data com base na prioridade
                 if (!empty($dataExpedicao)) {
                     $statusDetalhado = 'Expedição';
                     $dataStatus = (new DateTime($dataExpedicao))->format('d/m/Y H:i:s');
                     $novoStatusParaDB = 'EXPEDICAO';
+                } elseif (!empty($dataPreExpedicao)) {
+                    $statusDetalhado = 'Pré-Expedição';
+                    $dataStatus = (new DateTime($dataPreExpedicao))->format('d/m/Y H:i:s');
+                    $novoStatusParaDB = 'PRE_EXPEDICAO';
+                } elseif (!empty($dataGravacao)) {
+                    $statusDetalhado = 'Gravação';
+                    $dataStatus = (new DateTime($dataGravacao))->format('d/m/Y H:i:s');
+                    $novoStatusParaDB = 'GRAVACAO';
+                } else {
+                    // Se nenhuma das datas de produção estiver preenchida, usar o status geral da JallCard
+                    $statusDetalhado = $ordemProducao['status'] ?? 'INDEFINIDO';
+                    $novoStatusParaDB = $ordemProducao['status'] ?? 'INDEFINIDO';
+                }
+
+                // Buscar dados da transportadora e ID de rastreamento SOMENTE se o status for Expedição ou FINALIZADA
+                if (in_array($novoStatusParaDB, ['EXPEDICAO', 'FINALIZADA'])) {
+                    $documentos = JallCardHelper::getDocumentosByOp($opJallCard, true);
+                    if (!empty($documentos) && isset($documentos[0])) {
+                        $doc = $documentos[0];
+                        $transportadora = $doc['entregadora'] ?? null;
+                        $idRastreamento = $doc['codigoPostagem'] ?? null;
+                    } else {
+                        LogHelper::logJallCard("Nenhum documento encontrado para OP {$opJallCard} para buscar ID de rastreamento e transportadora (Status: {$novoStatusParaDB}).", 'JallCardStatusUpdateJob::executar', 'WARNING');
+                    }
+                }
+
+                // Definir mensagem de status e comentário da timeline após a possível busca de rastreamento
+                $mensagemStatus = '';
+                $commentTimeline = '';
+
+                if ($novoStatusParaDB === 'EXPEDICAO') {
                     if ($transportadora && $idRastreamento) {
                         $mensagemStatus = "JallCard: Recolhido pela transportadora";
                         $commentTimeline = "JallCard: Status finalizado: {$transportadora} - {$idRastreamento}.\nData: {$dataStatus}";
@@ -98,22 +119,13 @@ try {
                         $mensagemStatus = "JallCard: Aguardando recolhimento da transportadora";
                         $commentTimeline = "JallCard: Status atualizado para 'Expedição'.\nData: {$dataStatus}";
                     }
-                } elseif (!empty($dataPreExpedicao)) {
-                    $statusDetalhado = 'Pré-Expedição';
-                    $dataStatus = (new DateTime($dataPreExpedicao))->format('d/m/Y H:i:s');
-                    $novoStatusParaDB = 'PRE_EXPEDICAO';
+                } elseif ($novoStatusParaDB === 'PRE_EXPEDICAO') {
                     $mensagemStatus = "JallCard: Aguardando recolhimento da transportadora";
                     $commentTimeline = "JallCard: Aguardando recolhimento da transportadora.\nData: {$dataStatus}";
-                } elseif (!empty($dataGravacao)) {
-                    $statusDetalhado = 'Gravação';
-                    $dataStatus = (new DateTime($dataGravacao))->format('d/m/Y H:i:s');
-                    $novoStatusParaDB = 'GRAVACAO';
+                } elseif ($novoStatusParaDB === 'GRAVACAO') {
                     $mensagemStatus = "JallCard: Cartões enviados para gravação";
                     $commentTimeline = "JallCard: Cartões enviados para gravação.\nData: {$dataStatus}";
                 } else {
-                    // Se nenhuma das datas de produção estiver preenchida, usar o status geral da JallCard
-                    $statusDetalhado = $ordemProducao['status'] ?? 'INDEFINIDO';
-                    $novoStatusParaDB = $ordemProducao['status'] ?? 'INDEFINIDO';
                     $mensagemStatus = "JallCard: Status atualizado para '{$statusDetalhado}'";
                     $commentTimeline = "JallCard: Status atualizado para '{$statusDetalhado}'.";
                 }
