@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL); // Reporta todos os erros
+ini_set('display_errors', 1); // Exibe erros no output
+
 date_default_timezone_set('America/Sao_Paulo');
 
 // Define nome da aplicação para logs
