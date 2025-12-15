@@ -72,6 +72,8 @@ try {
 
         if ($ordemProducao && isset($ordemProducao['producao'])) {
             echo "DEBUG: Entrou no bloco 'if (ordemProducao && producao)' para OP: {$opJallCard}\n";
+            echo "DEBUG: Iniciando determinação de status e rastreamento para OP: {$opJallCard}\n"; // Novo echo
+
             $dataGravacao = $ordemProducao['producao']['gravacao'] ?? null;
             $dataPreExpedicao = $ordemProducao['producao']['preExpedicao'] ?? null;
             $dataExpedicao = $ordemProducao['producao']['expedicao'] ?? null;
@@ -105,6 +107,7 @@ try {
             }
 
             LogHelper::logJallCard("DEBUG: OP {$opJallCard}, Status determinado: {$novoStatusParaDB}", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
+            echo "DEBUG: Status determinado para OP {$opJallCard}: {$novoStatusParaDB}\n"; // Novo echo
 
             // Buscar dados da transportadora e ID de rastreamento SOMENTE se o status for Expedição ou FINALIZADA
             if (in_array($novoStatusParaDB, ['EXPEDICAO', 'FINALIZADA'])) {
@@ -121,6 +124,15 @@ try {
             } else {
                 LogHelper::logJallCard("DEBUG: Status não é Expedição nem Finalizada ({$novoStatusParaDB}). Não consultando documentos para OP {$opJallCard}.", __CLASS__ . '::' . __FUNCTION__, 'DEBUG');
             }
+
+            // Salvar id_rastreamento no banco de dados local (pedidos_integracao)
+            // Verifica se o idRastreamento foi obtido e se é diferente do que já está no banco (ou se o campo no banco está vazio/nulo)
+            $idRastreamentoNoBanco = $pedido['id_rastreio_transportador'] ?? null;
+            if ($idRastreamento && ($idRastreamentoNoBanco === null || $idRastreamentoNoBanco === '' || $idRastreamentoNoBanco !== $idRastreamento)) {
+                $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'id_rastreio_transportador', $idRastreamento);
+                LogHelper::logTrioCardGeral("ID de rastreamento '{$idRastreamento}' salvo/atualizado no banco local para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
+            }
+            // O campo 'transportadora_rastreio' não será salvo conforme decisão anterior.
 
             // Definir mensagem de status e comentário da timeline após a possível busca de rastreamento
             $mensagemStatus = '';
@@ -182,15 +194,6 @@ try {
                     LogHelper::logBitrix("Erro ao atualizar Deal ID: {$idDealBitrix} no Bitrix24 com status: " . ($resultadoUpdateBitrix['error'] ?? 'Erro desconhecido'), 'JallCardStatusUpdateJob::executar', 'ERROR');
                 }
 
-                // Salvar id_rastreamento no banco de dados local (pedidos_integracao)
-                // Verifica se o idRastreamento foi obtido e se é diferente do que já está no banco (ou se o campo no banco está vazio/nulo)
-                $idRastreamentoNoBanco = $pedido['id_rastreio_transportador'] ?? null;
-                if ($idRastreamento && ($idRastreamentoNoBanco === null || $idRastreamentoNoBanco === '' || $idRastreamentoNoBanco !== $idRastreamento)) {
-                    $databaseRepository->atualizarCampoPedidoIntegracao($idDealBitrix, 'id_rastreio_transportador', $idRastreamento);
-                    LogHelper::logTrioCardGeral("ID de rastreamento '{$idRastreamento}' salvo/atualizado no banco local para Deal ID: {$idDealBitrix}.", __CLASS__ . '::' . __FUNCTION__, 'INFO');
-                }
-                // O campo 'transportadora_rastreio' não será salvo conforme decisão anterior.
-
                 // Adicionar comentário na Timeline do Deal
                 $entityTypeTimeline = 'dynamic_' . $bitrixConfig['entity_type_id_deal'];
                 $resultadoCommentBitrix = BitrixHelper::adicionarComentarioTimeline($entityTypeTimeline, $idDealBitrix, $commentTimeline, $bitrixConfig['user_id_comments']);
@@ -203,6 +206,9 @@ try {
             } else {
                 LogHelper::logTrioCardGeral("Status JallCard para OP {$opJallCard} não avançou ou não mudou (API: '{$novoStatusParaDB}', Local: '{$statusAtualLocal}'). Nenhuma atualização no Bitrix.", 'JallCardStatusUpdateJob::executar', 'DEBUG');
             }
+        } else {
+            LogHelper::logJallCard("Não foi possível obter dados de produção ou a resposta da API JallCard está incompleta para OP: {$opJallCard}.", 'JallCardStatusUpdateJob::executar', 'ERROR');
+            echo "DEBUG: Não foi possível obter dados de produção ou a resposta da API JallCard está incompleta para OP: {$opJallCard}.\n";
         }
         echo "DEBUG: Saindo do loop foreach para Deal ID: {$pedido['id_deal_bitrix']}\n";
     } // Fim do foreach
